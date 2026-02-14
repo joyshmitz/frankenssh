@@ -15,15 +15,18 @@ This project uses four pervasive disciplines:
 
 1. alien-artifact-coding for decision theory, confidence calibration, and explainability.
 2. extreme-software-optimization for profile-first, proof-backed performance work.
-3. RaptorQ-everywhere for self-healing durability of long-lived artifacts and state.
+3. RaptorQ-everywhere for self-healing durability of long-lived trust/evidence artifacts.
 4. frankenlibc/frankenfs compatibility-security thinking: strict vs hardened mode separation, fail-closed compatibility gates, and explicit drift ledgers.
 
 ## Current State
 
 - Project charter and porting docs established
 - 15-crate workspace scaffolded
-- All specification documents written
+- Core porting specs written (`EXISTING_SSH_STRUCTURE.md`, `PROPOSED_ARCHITECTURE.md`, `PLAN_TO_PORT_SSH_TO_RUST.md`, `FEATURE_PARITY.md`)
+- Canonical normative spec (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`) not yet authored
+- CI workflow under `.github/workflows` not yet authored
 - Implementation not yet started (Phase 1: Bootstrap)
+- OpenSSH oracle checkout is local/gitignored and may need bootstrap on a fresh clone
 
 ## V1 Scope
 
@@ -70,6 +73,26 @@ These four docs are the canonical porting-to-Rust workflow for this repo:
 - `EXISTING_SSH_STRUCTURE.md`
 - `PROPOSED_ARCHITECTURE.md`
 - `FEATURE_PARITY.md`
+
+## Legacy Oracle Bootstrap
+
+OpenSSH is used as the behavioral oracle at:
+
+- `legacy_openssh_code/openssh-portable`
+
+This path is intentionally gitignored as a local workspace dependency. If it's
+missing:
+
+```bash
+mkdir -p legacy_openssh_code
+git clone https://github.com/openssh/openssh-portable legacy_openssh_code/openssh-portable
+```
+
+Preflight before running conformance harness:
+
+```bash
+test -d legacy_openssh_code/openssh-portable || { echo "missing OpenSSH oracle checkout"; exit 1; }
+```
 
 ## Validation Commands
 
