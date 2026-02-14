@@ -200,13 +200,11 @@ curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents
 
 ### 6.1 Поточний стан агентів у Mail
 
-Станом на 2026-02-14 у `data-projects-frankenssh` після prune залишився:
+Станом на 2026-02-14 у `data-projects-frankenssh` — **0 агентів** (повний prune).
 
-- `NavyHollow` (`program=ntm`) — session coordinator/оркестрація.
+Усі агенти (coordinator `NavyHollow`, pane-агенти claude-code/codex-cli/gemini-cli) реєструються автоматично при `ntm spawn` з випадковими іменами і живуть тільки поки сесія активна. Після `ntm kill` + `prune-agents` всі видаляються.
 
-Pane-агенти (claude-code, codex-cli, gemini-cli) реєструються автоматично при кожному `ntm spawn` з новими випадковими іменами. Старі імена після `prune-agents` мертві й не відновлюються.
-
-Будь-які додаткові тимчасові/дубльовані агенти прибираються через `projects prune-agents`, щоб не засмічувати UI й адресну книгу.
+Будь-які накопичені тимчасові/дубльовані агенти прибираються через `projects prune-agents`.
 
 ### 6.2 Безпечне очищення зайвих агентів (без костилів)
 
@@ -217,8 +215,7 @@ Dry-run:
 ```bash
 cd /home/ubuntu/mcp_agent_mail
 .venv/bin/python -m mcp_agent_mail.cli projects prune-agents data-projects-frankenssh \
-  --keep-latest-per-program 0 \
-  --keep-agent NavyHollow
+  --keep-latest-per-program 0
 ```
 
 Apply:
@@ -227,7 +224,6 @@ Apply:
 cd /home/ubuntu/mcp_agent_mail
 .venv/bin/python -m mcp_agent_mail.cli projects prune-agents data-projects-frankenssh \
   --keep-latest-per-program 0 \
-  --keep-agent NavyHollow \
   --apply --yes
 ```
 
@@ -321,7 +317,7 @@ cd /home/ubuntu/mcp_agent_mail
 - `cargo clippy --all-targets -- -D warnings` — pass
 - `cargo test --workspace` — pass (у workspace наразі немає реалізованих тест-кейсів, всі crates показали `0 tests`)
 - `.venv/bin/pytest -q tests/test_cli_extended.py` у `/home/ubuntu/mcp_agent_mail` — pass (включно з тестом для `projects prune-agents`)
-- `curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents` → `{"agents":["NavyHollow"]}` (pane-агенти зʼявляються після `ntm spawn`)
+- `curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents` → `{"agents":[]}` (агенти зʼявляються після `ntm spawn`)
 
 ### 11.1 Операційний smoke-check (2026-02-14, після підйому сесії `frankenssh`)
 
