@@ -42,6 +42,8 @@
   - `auto_register = true`
   - `program_name = "ntm"`
 - `[agents].codex` перевизначено без застарілого флага `--enable web_search=live` (він ламав старт Codex pane у поточній версії CLI).
+- `[gemini_setup]`
+  - `auto_select_pro_model = false` (щоб `ntm spawn` не блокувався на auto-setup Gemini model picker і не зависав на timeout)
 
 ### `~/.config/ntm/hooks.toml`
 
@@ -51,6 +53,9 @@
    `~/.config/ntm/sessions/<session>/<project-slug>/agent_registry.json`
 2. Мапить `pane_id -> pane_index` через `tmux list-panes`.
 3. Надсилає в кожен pane коротке повідомлення з уже призначеним Agent Mail імʼям.
+
+Реалізаційна деталь:
+- hook використовує прямий `tmux send-keys` (а не `ntm send`), щоб уникнути рекурсивного виклику `ntm` всередині `post-spawn` і потенційних зависань.
 
 Це важливо, бо:
 
@@ -65,6 +70,9 @@
 - `AGENT_MAIL_URL` -> `http://127.0.0.1:8765/api/`
 - `AGENT_MAIL_TOKEN` -> з `MCP_AM_TOKEN` (якщо задано)
 - ініціалізація `ntm shell zsh` тільки в interactive shell
+- для детермінованого spawn без автопідхоплення старих задач:
+  - `NTM_RECOVERY_ENABLED=false`
+  - `NTM_RECOVERY_AUTO_INJECT=false`
 
 ### MCP у CLI-агентах
 
@@ -131,6 +139,11 @@
 - MCP server: `ms mcp serve`
 - Skill paths проіндексовано (`ms index --all`)
 - `ms doctor` проходить
+- `ms` встановлено з офіційного `upstream/main`:
+  `cargo install --git https://github.com/Dicklesworthstone/meta_skill --branch main ms --force`
+  (commit `e624dcf`, включає `fix(mcp): protocol compliance for Codex and concurrent access`)
+- це усуває помилку Codex startup:
+  `MCP client for meta-skill failed to start ... initialize response`
 
 ---
 
@@ -242,6 +255,11 @@ cd /home/ubuntu/mcp_agent_mail
    - `am list-projects` (команда відсутня в цьому shell)
    - зауваження про `bd not found` як blocking/error (у поточному `ntm doctor` це не blocking failure)
 
+7. Auto-recovery може неочікувано інжектити “continue bead” контекст  
+   Щоб `spawn` не запускав виконання старих `br` задач автоматично, тримати:
+   - `NTM_RECOVERY_ENABLED=false`
+   - `NTM_RECOVERY_AUTO_INJECT=false`
+
 ---
 
 ## 8. Поточний baseline версій (практично важливі)
@@ -299,3 +317,4 @@ cd /home/ubuntu/mcp_agent_mail
 - `ms doctor` (CLI) може повернути `LockBusy`, якщо активний `ms mcp serve` тримає Tantivy lock; у такому випадку перевіряти health через MCP server (`meta-skill`)
 - `ubs --only=rust /data/projects/frankenssh --ci` → `Critical: 0`, `Warning: 4`, `Info: 14` (на поточному коді є `unwrap/try_into().unwrap()` сигнали)
 - `br ready --json` (у CWD `/data/projects/frankenssh`) → 5 ready items, включно з `fsh-690` у `in_progress`
+- `codex exec "Reply with exactly: MCP-OK"` → `mcp startup: ready: meta-skill, mcp-agent-mail`, відповідь `MCP-OK`, без `MCP startup incomplete`
