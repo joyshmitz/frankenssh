@@ -87,14 +87,14 @@ The four documents, in dependency order:
 | 1 | `EXISTING_SSH_STRUCTURE.md` | **Behavioral extraction** from legacy code. Documents WHAT the legacy system does (packet formats, state machines, algorithm negotiation, error conditions) without prescribing HOW to implement it in Rust. | Before any Rust code |
 | 2 | `PROPOSED_ARCHITECTURE.md` | **Idiomatic Rust architecture.** Crate map, dependency DAG, trait hierarchy, data-flow diagrams. Designed from the behavioral spec, not from C's module structure. | After behavior extraction |
 | 3 | `PLAN_TO_PORT_SSH_TO_RUST.md` | **Operational plan.** Scope, explicit exclusions, source metrics, phased delivery with acceptance criteria, cross-cutting concerns, risk register, success criteria. | After architecture design |
-| 4 | `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` | **Canonical normative specification.** Supersedes all other documents where conflicts exist. The single source of truth for what FrankenSSH MUST do. | Continuously maintained (once authored; currently pending) |
+| 4 | `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` | **Canonical normative specification.** Supersedes all other documents where conflicts exist. The single source of truth for what FrankenSSH MUST do. | Continuously maintained |
 
 ### 1.1 Document Lifecycle
 
 - Documents 1-3 are written **before** significant implementation begins.
 - Document 4 is the living normative spec — updated as implementation reveals
   behavioral nuances not captured in the initial extraction.
-- Documents 1-3 are committed in the repository root today; document 4 is committed at the root once authored.
+- All four documents are committed in the repository root.
 - Any change that alters protocol behavior MUST update the relevant documents
   in the same commit.
 
@@ -2010,8 +2010,8 @@ Operational porting plan. Should continue expanding to cover:
 
 ### C.4 `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`
 
-Canonical normative specification target. This file is not yet present; once
-written, it supersedes other docs on conflicts.
+Canonical normative specification. This file now exists and supersedes other
+docs on conflicts.
 
 ---
 

@@ -235,8 +235,7 @@ These files are mandatory and must stay current:
 2. `PROPOSED_ARCHITECTURE.md` (Rust crate/module architecture, trait contracts, dependency DAG)
 3. `PLAN_TO_PORT_SSH_TO_RUST.md` (scope, exclusions, phased delivery, acceptance criteria)
 4. `FEATURE_PARITY.md` (measured parity status — 58 capabilities across 11 domains)
-
-When a comprehensive normative spec (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`) is written, it becomes the canonical source of truth and supersedes all other documents on points of conflict.
+5. `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` (canonical normative spec; supersedes other docs on conflicts)
 
 ---
 
