@@ -1,0 +1,98 @@
+[workspace]
+resolver = "3"
+members = [
+  "crates/fsh-types",
+  "crates/fsh-error",
+  "crates/fsh-wire",
+  "crates/fsh-crypto",
+  "crates/fsh-transport",
+  "crates/fsh-auth",
+  "crates/fsh-channel",
+  "crates/fsh-session",
+  "crates/fsh-sftp",
+  "crates/fsh-forward",
+  "crates/fsh-agent",
+  "crates/fsh-server",
+  "crates/fsh-client",
+  "crates/fsh-harness",
+  "frankenssh",
+]
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "MIT"
+repository = "https://github.com/joyshmitz/frankenssh"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Internal crates
+fsh-types = { path = "crates/fsh-types" }
+fsh-error = { path = "crates/fsh-error" }
+fsh-wire = { path = "crates/fsh-wire" }
+fsh-crypto = { path = "crates/fsh-crypto" }
+fsh-transport = { path = "crates/fsh-transport" }
+fsh-auth = { path = "crates/fsh-auth" }
+fsh-channel = { path = "crates/fsh-channel" }
+fsh-session = { path = "crates/fsh-session" }
+fsh-sftp = { path = "crates/fsh-sftp" }
+fsh-forward = { path = "crates/fsh-forward" }
+fsh-agent = { path = "crates/fsh-agent" }
+fsh-server = { path = "crates/fsh-server" }
+fsh-client = { path = "crates/fsh-client" }
+fsh-harness = { path = "crates/fsh-harness" }
+
+# Async runtime (structured concurrency)
+# asupersync path will be resolved when /dp/asupersync is available on the build host.
+# For bootstrap, crates that depend on asupersync gate usage behind cfg.
+# asupersync = { path = "/dp/asupersync", features = ["proc-macros", "test-internals"] }
+
+# Production async I/O
+tokio = { version = "1", features = ["full"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+
+# Structured logging
+tracing = "0.1"
+
+# Crypto primitives
+ring = "0.17"
+chacha20poly1305 = "0.10"
+aes-gcm = "0.10"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+ed25519-dalek = { version = "2", features = ["pkcs8"] }
+sha2 = "0.10"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Testing
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1"
+tempfile = "3"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.release-perf]
+inherits = "release"
+opt-level = 3

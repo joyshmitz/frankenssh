@@ -1,0 +1,83 @@
+# FrankenSSH
+
+FrankenSSH is a clean-room Rust reimplementation of SSH-2 targeting grand-scope excellence: wire compatibility, cryptographic rigor, post-quantum readiness, and compile-time protocol safety.
+
+## What Makes This Project Special
+
+Two crown-jewel innovations:
+
+1. **Post-Quantum Hybrid Key Exchange:** ML-KEM-768 + X25519 hybrid protects against "harvest now, decrypt later" quantum threats while maintaining backward compatibility with classical-only peers.
+2. **Type-State Protocol Machine:** Rust's type system encodes the SSH protocol state machine so that invalid transitions (e.g., sending data before authentication) are compilation errors, not runtime bugs.
+
+## Methodological DNA
+
+This project uses four pervasive disciplines:
+
+1. alien-artifact-coding for decision theory, confidence calibration, and explainability.
+2. extreme-software-optimization for profile-first, proof-backed performance work.
+3. RaptorQ-everywhere for self-healing durability of long-lived artifacts and state.
+4. frankenlibc/frankenfs compatibility-security thinking: strict vs hardened mode separation, fail-closed compatibility gates, and explicit drift ledgers.
+
+## Current State
+
+- Project charter and porting docs established
+- 15-crate workspace scaffolded
+- All specification documents written
+- Implementation not yet started (Phase 1: Bootstrap)
+
+## V1 Scope
+
+- SSH-2 wire compatibility with OpenSSH
+- Modern ciphers only (ChaCha20-Poly1305, AES-256-GCM, AES-256-CTR)
+- Ed25519, RSA-SHA2, ECDSA host keys
+- Pubkey, password, keyboard-interactive, certificate auth
+- Channel multiplexing with flow control
+- SFTP v3 subsystem
+- Local/remote/dynamic port forwarding
+- SSH agent protocol
+- Server and client binaries
+
+## Architecture Direction
+
+```
+TCP -> Wire parser -> Crypto suite -> Transport (type-state)
+  -> Auth -> Channel mux -> Session/SFTP/Forward/Agent
+  -> Server/Client binaries
+```
+
+## Compatibility and Security Stance
+
+Preserve OpenSSH-observable handshake sequences, auth flows, channel behavior, and error responses. Defend against malformed frames, MITM, timing side-channels, and key compromise. Zero unsafe code.
+
+## Performance and Correctness Bar
+
+Track handshake latency, transfer throughput, and channel overhead; gate crypto operation regressions. Maintain SSH-2 wire compatibility, cryptographic correctness, and protocol state machine invariants.
+
+## Key Documents
+
+- `AGENTS.md`
+- `FRANKENSSH_PROPOSAL.md` (comprehensive top-level proposal)
+- `EXISTING_SSH_STRUCTURE.md`
+- `PROPOSED_ARCHITECTURE.md`
+- `PLAN_TO_PORT_SSH_TO_RUST.md`
+- `FEATURE_PARITY.md`
+
+## Porting Artifact Set
+
+These four docs are the canonical porting-to-Rust workflow for this repo:
+
+- `PLAN_TO_PORT_SSH_TO_RUST.md`
+- `EXISTING_SSH_STRUCTURE.md`
+- `PROPOSED_ARCHITECTURE.md`
+- `FEATURE_PARITY.md`
+
+## Validation Commands
+
+```bash
+cargo fmt --check
+cargo check --all-targets
+cargo clippy --all-targets -- -D warnings
+cargo test --workspace
+cargo test -p fsh-harness -- --nocapture
+cargo bench -p fsh-harness
+```

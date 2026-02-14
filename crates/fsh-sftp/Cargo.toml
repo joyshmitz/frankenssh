@@ -1,0 +1,11 @@
+[package]
+name = "fsh-sftp"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+fsh-types = { workspace = true }
+fsh-error = { workspace = true }
+fsh-wire = { workspace = true }
+fsh-channel = { workspace = true }
+# asupersync = { workspace = true }  # uncomment when /dp/asupersync available
