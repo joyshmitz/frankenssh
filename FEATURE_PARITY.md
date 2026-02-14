@@ -53,6 +53,24 @@ Section `0.3.1` item is complete only when all rows mapped to that item are
 | Parser fuzz target (panic-free) | item 4 | not_started | Fuzz run summary with crash status and corpus notes |
 | OpenSSH fixture parsing | item 4 | not_started | Captured handshake parse transcript |
 
+## 1.2 Phase 2 Readiness Status Transition Rules
+
+Status transitions are row-level and evidence-driven:
+
+1. `not_started -> in_progress`
+   - at least one concrete evidence artifact exists for that row and is linked
+     in the active PR.
+2. `in_progress -> parity_green`
+   - all acceptance evidence in the row is present, reproducible, and mapped to
+     the relevant `PLAN_TO_PORT_SSH_TO_RUST.md` Section `0.3.1` item.
+3. `parity_green -> parity_gap`
+   - regression, drift, or invalidated evidence is detected after a prior green
+     state.
+4. `parity_gap -> in_progress`
+   - remediation is in progress with fresh linked evidence.
+5. Direct `not_started -> parity_green` is allowed only if all required
+   acceptance evidence lands in the same patch and is review-verified.
+
 ## 2. Parity Matrix
 
 | Feature Family | Status | Notes |

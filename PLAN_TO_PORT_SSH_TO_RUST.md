@@ -120,6 +120,32 @@ The Phase 2 completion PR MUST include or link all of:
 4. Test evidence for round-trip, property tests, fuzzing, and OpenSSH fixture
    parsing.
 
+### 0.3.3 Phase 2 Evidence Artifact Format (Review-Ready)
+
+Phase 2 evidence MUST be submitted in a deterministic review format.
+
+1. Artifact root:
+   - `artifacts/phase2/<YYYY-MM-DD>/<short-sha>/`
+2. Required files:
+   - `types-invariants.md` (`fsh-types` newtypes/helpers + invariant checks)
+   - `error-mapping.md` (`FshError`/`ParseError` mapping to disconnect reasons)
+   - `wire-coverage.md` (Phase 2 message baseline coverage table)
+   - `roundtrip-summary.txt` (message-by-message byte equality summary)
+   - `proptest-summary.txt` (property test counts, failures, repro seeds)
+   - `fuzz-summary.txt` (target name, runtime, crashes, corpus notes)
+   - `openssh-fixture-parse.txt` (fixture source and parser outcome)
+3. Each file MUST include provenance header fields:
+   - `git_sha`
+   - `utc_timestamp`
+   - `toolchain` (`rustc -Vv` summary)
+   - `command` (exact executed command line)
+4. Failure reporting:
+   - if a required command fails, the artifact MUST still be emitted with
+     non-zero exit status and captured stderr snippet.
+5. Traceability:
+   - each readiness artifact MUST state the mapped
+     `FEATURE_PARITY.md` row(s) and `PLAN` Section `0.3.1` item(s) it satisfies.
+
 ### 0.4 Crypto (Phase 3)
 
 - [ ] CipherSuite trait + chacha20-poly1305 implementation
