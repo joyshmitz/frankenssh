@@ -37,17 +37,21 @@ Scope note:
 
 ## 1.1 Phase 2 Readiness Gates (Non-Parity-Gating)
 
-| Phase 2 Gate | Status | Acceptance Evidence |
-|---|---|---|
-| `fsh-types` foundational newtypes | not_started | API/type inventory with invariants checklist |
-| `fsh-types` binary helpers (`read_*`/`write_*`) | not_started | Unit tests for bounds/truncation/mpint/name-list cases |
-| `fsh-error` + `ParseError` taxonomies | not_started | Variant inventory and review notes |
-| `fsh-error` disconnect reason mapping | not_started | Mapping table with RFC 4253 §11.1 references |
-| `fsh-wire` message baseline + `WirePacket` trait | not_started | Message coverage matrix vs Phase 2 baseline list |
-| Message-level round-trip suite | not_started | Byte-for-byte round-trip test report |
-| Property-based parser/serializer tests | not_started | `proptest` run summary + seed/repro notes |
-| Parser fuzz target (panic-free) | not_started | Fuzz run summary with crash status and corpus notes |
-| OpenSSH fixture parsing | not_started | Captured handshake parse transcript |
+Mapping rule: each row is tracked independently. A `PLAN_TO_PORT_SSH_TO_RUST.md`
+Section `0.3.1` item is complete only when all rows mapped to that item are
+`parity_green`.
+
+| Phase 2 Gate | Plan 0.3.1 Mapping | Status | Acceptance Evidence |
+|---|---|---|---|
+| `fsh-types` foundational newtypes | item 1 | not_started | API/type inventory with invariants checklist |
+| `fsh-types` binary helpers (`read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_*`) | item 1 | not_started | Unit tests for bounds/truncation/mpint/name-list cases |
+| `fsh-error` + `ParseError` taxonomies | item 2 | not_started | Variant inventory and review notes |
+| `fsh-error` disconnect reason mapping | item 2 | not_started | Mapping table with RFC 4253 §11.1 references |
+| `fsh-wire` message baseline + `WirePacket` trait | item 3 | not_started | Message coverage matrix vs Phase 2 baseline list |
+| Message-level round-trip suite | item 4 | not_started | Byte-for-byte round-trip test report |
+| Property-based parser/serializer tests | item 4 | not_started | `proptest` run summary + seed/repro notes |
+| Parser fuzz target (panic-free) | item 4 | not_started | Fuzz run summary with crash status and corpus notes |
+| OpenSSH fixture parsing | item 4 | not_started | Captured handshake parse transcript |
 
 ## 2. Parity Matrix
 

@@ -64,12 +64,14 @@ ls -1 .github/workflows/*.yml
 
 ### 0.3 Types & Wire (Phase 2)
 
-- [ ] `fsh-types`: newtypes (SessionId, ChannelId, SeqNum, MessageType, WindowSize)
-- [ ] `fsh-types`: binary helpers (read_u32, read_string, read_mpint, write_*)
+- [ ] `fsh-types`: newtypes (SessionId, ChannelId, SeqNum, MessageType, WindowSize, DisconnectReason)
+- [ ] `fsh-types`: binary helpers (read_u32, read_string, read_name_list, read_mpint, write_*)
 - [ ] `fsh-error`: FshError enum (17 variants), disconnect reason mapping
 - [ ] `fsh-wire`: all SSH message structs with WirePacket trait
 - [ ] Round-trip tests for every message type
+- [ ] Property tests (`proptest`) for parser/serializer round-trip invariants
 - [ ] Fuzz target for packet parsing
+- [ ] Parse at least one captured OpenSSH handshake fixture without parser errors
 
 ### 0.3.1 Phase 2 Acceptance Gate (Normative)
 
@@ -77,10 +79,14 @@ Phase 2 MAY be marked complete only when all criteria below are met.
 
 1. `fsh-types`:
    - Foundational newtypes are defined: `SessionId`, `ChannelId`, `SeqNum`,
-     `WindowSize`, `MessageType`, `DisconnectReason`, `SftpStatus`, `KeyType`.
+     `WindowSize`, `MessageType`, `DisconnectReason`.
+   - SFTP-specific status typing is out of Phase 2 scope and MUST land with
+     `fsh-sftp` work in Phase 6.
+   - Crypto-specific key-family typing is out of Phase 2 scope; wire parsing
+     treats algorithm names as opaque strings at this phase.
    - Binary helpers exist and are used as the default parse path for wire code:
-     `read_u32`, `read_string`, `read_mpint`, `write_u32`, `write_string`,
-     `write_mpint`, `write_name_list`.
+     `read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`,
+     `write_string`, `write_mpint`, `write_name_list`.
    - Helpers are panic-free on malformed input and enforce checked bounds before
      any allocation.
 2. `fsh-error`:
