@@ -20,7 +20,7 @@ Purpose: one-pass review checklist for the Phase 2 normative docs package.
 
 - [ ] PLAN Phase 2 checklist and acceptance tests are aligned (`PLAN_TO_PORT_SSH_TO_RUST.md:88`, `PLAN_TO_PORT_SSH_TO_RUST.md:100`)
 - [ ] Exit evidence package is explicit and reviewable (`PLAN_TO_PORT_SSH_TO_RUST.md:140`)
-- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:157`)
+- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:158`)
 - [ ] Milestones cleanly separate Phase 2 baseline from Phase 3 crypto (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:533`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:540`)
 - [ ] Strict-mode rekey defaults are explicit and OpenSSH-aligned (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:106`)
 

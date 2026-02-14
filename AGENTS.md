@@ -258,19 +258,26 @@ Rules:
    - Start with a bounded seed graph (small, acyclic, execution-focused), then
      expand only when evidence demands it.
 4. **Mandatory acceptance contract for every implementation bead**:
-   - Unit-test scope and exact command set.
-   - E2E script scope and executable command set.
+   - Unit-test scope and exact command set (including expected outcomes).
+   - E2E script scope and executable command set runnable from repo root.
    - Structured logging requirements and required fields:
      `trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`,
-     `latency_ns`, `artifact_refs`.
+     `latency_ns`, `artifact_refs` (or explicit `N/A` + justification for
+     pure-function beads with no runtime logging surface).
    - Explicit evidence artifact locations (paths or CI artifact URLs).
+   - Explicit mapping to at least one `PLAN` phase item and one
+     `FEATURE_PARITY` row.
 5. **Dependency hygiene**:
    - Cycles are forbidden; verify with `br dep cycles --json`.
    - Every blocking dependency must include a one-sentence justification in the
      bead body.
+   - Template hygiene is mandatory: `br lint --json` MUST report no unresolved
+     required-section findings before deep implementation starts.
 6. **Session protocol**:
    - Start: `br ready --json`.
    - Claim: `br update <id> --status in_progress`.
+   - Validate before close: `br lint <id> --json` and confirm evidence links are
+     present in the bead body.
    - Finish: `br close <id> --reason "..."`.
    - Sync: `br sync --flush-only` (non-invasive; no auto-commit).
    - Persist: `git add .beads/` and commit in the same change where status
