@@ -217,13 +217,53 @@ Illegal transitions MUST be unrepresentable in type-state APIs.
 
 ## 11. Wire and Transport Contract
 
-`fsh-wire` requirements:
+### 11.1 Phase 2 Baseline (Normative Entry Gate)
 
-1. Parse/serialize MUST be bounded and panic-free on malformed input.
-2. Hot-path operations SHOULD avoid avoidable allocations.
-3. Length fields MUST be validated before allocation.
-4. Message type dispatch MUST reject unsupported critical message classes with
+Phase 2 implementation work is in-spec only if the baseline contracts in
+Sections 11.2-11.4 are satisfied together.
+
+### 11.2 `fsh-types` Contract
+
+1. `fsh-types` MUST define foundational protocol newtypes:
+   `SessionId`, `ChannelId`, `SeqNum`, `WindowSize`, `MessageType`,
+   `DisconnectReason`, `SftpStatus`, and `KeyType`.
+2. `fsh-types` MUST provide binary helpers for SSH network-byte-order parsing
+   and serialization: `read_u32`, `read_string`, `read_mpint`, `write_u32`,
+   `write_string`, `write_mpint`, and `write_name_list`.
+3. Parsing helpers MUST be panic-free on malformed/truncated input and MUST
+   return structured parse errors.
+4. Helpers that consume untrusted lengths MUST perform checked bounds validation
+   before allocation.
+
+### 11.3 `fsh-error` Contract
+
+1. `fsh-error` MUST define `FshError`, `ParseError`, and a workspace-standard
+   `Result<T>` alias.
+2. Externally observable error paths MUST map deterministically to SSH
+   disconnect reason codes (RFC 4253 §11.1).
+3. A single documented fallback mapping for otherwise-unclassified internal
+   errors MUST exist and remain stable unless this spec is updated.
+4. Strict-mode disconnect payloads MUST use OpenSSH-compatible language-tag
+   behavior (empty string unless an explicit compatibility exception is
+   approved in this specification).
+
+### 11.4 `fsh-wire` Contract
+
+1. `fsh-wire` MUST remain pure parse/serialize logic (no network I/O).
+2. Parse/serialize MUST be bounded and panic-free on malformed input.
+3. Hot-path operations SHOULD avoid avoidable allocations.
+4. Length fields MUST be validated before allocation.
+5. Message type dispatch MUST reject unsupported critical message classes with
    mapped disconnect reasons.
+6. The Phase 2 message baseline MUST include wire structs implementing
+   parse/serialize/message-type behavior for:
+   `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ServiceRequest`,
+   `ServiceAccept`, `UserAuthRequest`, `UserAuthSuccess`, `UserAuthFailure`,
+   `UserAuthBanner`, `ChannelOpen`, `ChannelOpenConfirmation`,
+   `ChannelOpenFailure`, `ChannelData`, `ChannelExtendedData`,
+   `ChannelWindowAdjust`, `ChannelEof`, `ChannelClose`, `ChannelRequest`,
+   `ChannelSuccess`, `ChannelFailure`, `GlobalRequest`, `RequestSuccess`,
+   `RequestFailure`, `Disconnect`, `Ignore`, `Unimplemented`, and `Debug`.
 
 Transport requirements:
 
@@ -318,6 +358,24 @@ Agent rules:
 `FshError` MUST map to SSH disconnect reason codes for externally observable
 errors. Unknown internal error classes MUST map to a deterministic default
 disconnect code with structured internal diagnostics.
+
+### 15.1 Minimum Required Mapping Baseline (Phase 2)
+
+At minimum, the following mappings are REQUIRED:
+
+| `FshError` class | SSH disconnect reason |
+|---|---|
+| `Protocol` | `SSH_DISCONNECT_PROTOCOL_ERROR` (2) |
+| `KexFailed` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
+| `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
+| `Crypto` | `SSH_DISCONNECT_MAC_ERROR` (5) |
+| `HostKeyVerification` | `SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE` (9) |
+| `Timeout` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
+| `Cancelled` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
+| `AuthFailed` | `SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE` (14) |
+
+Additional variants MAY exist, but MUST still map deterministically and be
+covered by tests.
 
 Disconnect behavior MUST specify:
 
@@ -436,7 +494,8 @@ Exit criteria:
 
 Exit criteria:
 
-1. parsers and message structures implemented with tests
+1. Sections 11.2-11.4 Phase 2 baseline implemented with evidence
+   (round-trip/property/fuzz/OpenSSH fixture parsing)
 2. baseline cipher/KEX/host-key primitives integrated
 3. RFC vector evidence published
 
