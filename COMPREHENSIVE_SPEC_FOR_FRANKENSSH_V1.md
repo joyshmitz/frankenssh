@@ -586,3 +586,80 @@ until either:
 
 1. implementation is corrected, or
 2. this document is updated with explicit rationale and acceptance evidence.
+
+## 26. Phase 2 API Contract Appendix (Normative)
+
+This appendix defines the minimum public contract shape for Phase 2
+implementation work (`fsh-types`, `fsh-error`, `fsh-wire`).
+
+### 26.1 `fsh-types` Minimum API and Invariants
+
+Required type wrappers (shape-level contract):
+
+```rust
+pub struct SessionId(pub u64);
+pub struct ChannelId(pub u32);
+pub struct SeqNum(pub u32);
+pub struct WindowSize(pub u32);
+pub struct MessageType(pub u8);
+pub struct DisconnectReason(pub u32);
+```
+
+Required helper API family (signature-level contract; concrete containers MAY be
+zero-copy wrappers):
+
+```rust
+pub fn read_u32(input: &mut &[u8]) -> Result<u32, ParseError>;
+pub fn read_string(input: &mut &[u8]) -> Result<&[u8], ParseError>;
+pub fn read_name_list(input: &mut &[u8]) -> Result<Vec<&[u8]>, ParseError>;
+pub fn read_mpint(input: &mut &[u8]) -> Result<Vec<u8>, ParseError>;
+pub fn write_u32(out: &mut Vec<u8>, value: u32);
+pub fn write_string(out: &mut Vec<u8>, value: &[u8]);
+pub fn write_name_list(out: &mut Vec<u8>, names: &[&[u8]]);
+pub fn write_mpint(out: &mut Vec<u8>, value: &[u8]);
+```
+
+Failure semantics:
+
+1. Helpers MUST NOT panic on malformed/truncated input.
+2. Length-driven helpers MUST bound-check before allocation/advance.
+3. Name-list parsing MUST reject invalid separator/token encoding deterministically.
+4. Failure behavior MUST be deterministic and map to structured `ParseError`
+   classes suitable for disconnect mapping in higher layers.
+
+### 26.2 `fsh-error` Minimum API and Failure Semantics
+
+Required classes:
+
+1. `FshError` (cross-layer operational/protocol error envelope)
+2. `ParseError` (wire/helper parsing failures)
+3. `Result<T>` alias bound to the project error envelope
+
+Required behavior:
+
+1. Externally observable error classes MUST map deterministically to SSH
+   disconnect reason codes per Section 15.1.
+2. A stable fallback mapping MUST exist for unclassified internal failures.
+3. Public-facing reason strings MUST be secret-safe and strict-mode language tag
+   behavior MUST remain OpenSSH-compatible.
+
+### 26.3 `fsh-wire` Minimum API and Failure Semantics
+
+Required trait shape:
+
+```rust
+pub trait WirePacket: Sized {
+    const MESSAGE_TYPE: u8;
+    fn parse(payload: &[u8]) -> Result<Self, ParseError>;
+    fn serialize(&self, out: &mut Vec<u8>) -> Result<(), ParseError>;
+}
+```
+
+Required dispatch behavior:
+
+1. Message dispatch MUST route by SSH message type number to the Phase 2
+   baseline message set defined in Section 11.4.
+2. Unsupported critical message classes MUST fail closed with deterministic
+   mapped disconnect behavior.
+3. Parse and serialize behavior MUST remain bounded and panic-free.
+4. Wire APIs MUST remain pure and MUST NOT perform network I/O.
