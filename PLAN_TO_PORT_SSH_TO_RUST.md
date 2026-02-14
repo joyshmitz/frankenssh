@@ -151,7 +151,8 @@ The Phase 2 completion PR MUST include or link all of:
 6. Bead-closure evidence index mapping each closed Phase 2 bead to:
    - unit-test command/output reference
    - e2e script command/output reference
-   - structured log artifact reference
+   - structured log artifact reference, or explicit `N/A` justification for
+     pure-function beads with no runtime logging surface
 
 ### 0.3.3 Phase 2 Evidence Artifact Format (Review-Ready)
 
