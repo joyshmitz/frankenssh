@@ -14,6 +14,9 @@ Scope note:
 - SFTP v3 is parity-gated for V1.
 - SFTP v6 is optional extension scope and is not counted in the 58 tracked
   capabilities unless explicitly added to this matrix.
+- Phase 2 readiness gates (below) track foundation completeness and evidence,
+  but do not increase the 58-capability parity count until behavior-level
+  feature rows turn green.
 
 ## 1. Coverage Summary (Current)
 
@@ -31,6 +34,20 @@ Scope note:
 | Server | 0 | 4 | 0% |
 | Client | 0 | 4 | 0% |
 | **Overall** | **0** | **58** | **0%** |
+
+## 1.1 Phase 2 Readiness Gates (Non-Parity-Gating)
+
+| Phase 2 Gate | Status | Acceptance Evidence |
+|---|---|---|
+| `fsh-types` foundational newtypes | not_started | API/type inventory with invariants checklist |
+| `fsh-types` binary helpers (`read_*`/`write_*`) | not_started | Unit tests for bounds/truncation/mpint/name-list cases |
+| `fsh-error` + `ParseError` taxonomies | not_started | Variant inventory and review notes |
+| `fsh-error` disconnect reason mapping | not_started | Mapping table with RFC 4253 §11.1 references |
+| `fsh-wire` message baseline + `WirePacket` trait | not_started | Message coverage matrix vs Phase 2 baseline list |
+| Message-level round-trip suite | not_started | Byte-for-byte round-trip test report |
+| Property-based parser/serializer tests | not_started | `proptest` run summary + seed/repro notes |
+| Parser fuzz target (panic-free) | not_started | Fuzz run summary with crash status and corpus notes |
+| OpenSSH fixture parsing | not_started | Captured handshake parse transcript |
 
 ## 2. Parity Matrix
 

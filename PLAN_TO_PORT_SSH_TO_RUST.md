@@ -71,6 +71,49 @@ ls -1 .github/workflows/*.yml
 - [ ] Round-trip tests for every message type
 - [ ] Fuzz target for packet parsing
 
+### 0.3.1 Phase 2 Acceptance Gate (Normative)
+
+Phase 2 MAY be marked complete only when all criteria below are met.
+
+1. `fsh-types`:
+   - Foundational newtypes are defined: `SessionId`, `ChannelId`, `SeqNum`,
+     `WindowSize`, `MessageType`, `DisconnectReason`, `SftpStatus`, `KeyType`.
+   - Binary helpers exist and are used as the default parse path for wire code:
+     `read_u32`, `read_string`, `read_mpint`, `write_u32`, `write_string`,
+     `write_mpint`, `write_name_list`.
+   - Helpers are panic-free on malformed input and enforce checked bounds before
+     any allocation.
+2. `fsh-error`:
+   - `FshError` and `ParseError` taxonomies are defined with structured variants
+     suitable for transport/auth/channel/wire boundaries.
+   - Externally observable failures map deterministically to SSH disconnect
+     reason codes (RFC 4253 §11.1), with one documented stable fallback mapping
+     for otherwise-unclassified internal errors.
+   - Disconnect reason text and language-tag behavior are OpenSSH-compatible in
+     strict mode and MUST NOT leak secrets.
+3. `fsh-wire`:
+   - `WirePacket` parse/serialize/message-type behavior exists for the complete
+     Phase 2 message baseline defined in
+     `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` Section 11.4.
+   - Parsing remains pure (no network I/O) and bounded by explicit size checks.
+   - Unsupported critical message classes fail closed with deterministic mapped
+     disconnect behavior.
+4. Evidence and tests:
+   - Byte-for-byte round-trip tests for each Phase 2 message struct.
+   - Property tests (`proptest`) for valid message generation/round-trip.
+   - Parser fuzz target with no panics on arbitrary inputs.
+   - Successful parse of at least one captured OpenSSH handshake trace.
+
+### 0.3.2 Phase 2 Exit Evidence Package
+
+The Phase 2 completion PR MUST include or link all of:
+
+1. `fsh-types` invariants checklist (newtype bounds + helper behavior).
+2. `fsh-error` disconnect mapping table with RFC reason-code references.
+3. `fsh-wire` message coverage table for the Phase 2 baseline.
+4. Test evidence for round-trip, property tests, fuzzing, and OpenSSH fixture
+   parsing.
+
 ### 0.4 Crypto (Phase 3)
 
 - [ ] CipherSuite trait + chacha20-poly1305 implementation
