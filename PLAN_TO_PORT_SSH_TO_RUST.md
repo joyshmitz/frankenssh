@@ -119,7 +119,7 @@ Phase 2 MAY be marked complete only when all criteria below are met.
 2. `fsh-error`:
    - `FshError` and `ParseError` taxonomies are defined with structured variants
      suitable for transport/auth/channel/wire boundaries.
-   - `ParseError` is exposed through the `fsh-error` API surface and MAY be
+   - `ParseError` is exposed through the `fsh-error` API surface and MUST be
      re-exported from `fsh-types` to keep Phase 2 crate dependencies acyclic.
    - Externally observable failures map deterministically to SSH disconnect
      reason codes (RFC 4253 §11.1), with one documented stable fallback mapping
