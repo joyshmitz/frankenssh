@@ -72,12 +72,12 @@ Beads graph MUST be initialized and reviewable.
 - [ ] Seed only the near-term execution kernel (no bulk backlog dump): target 10-16 issues, 3-4 epics, dependency depth <= 3
 - [ ] Keep seed graph acyclic (`br dep cycles --json` returns empty cycle set)
 - [ ] Require each implementation bead to include:
-  - unit-test commands and expected outcomes
-  - e2e script path(s) and command lines
-  - structured logging contract (`trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`, `latency_ns`, `artifact_refs`)
+  - unit-test commands and expected outcomes (including deterministic seeds where applicable)
+  - e2e script path(s), repo-root command lines, and expected outcomes
+  - structured logging contract (`trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`, `latency_ns`, `artifact_refs`) or explicit `N/A` + justification for pure-function beads
   - evidence artifact location(s) (repo path and/or CI artifact URL)
 - [ ] Map every seed bead to at least one `PLAN` phase item and one `FEATURE_PARITY` row
-- [ ] Use `br` as the only mutation interface for issue state/dependencies (no manual JSONL edits)
+- [ ] Use `br` as the only mutation interface for issue state/dependencies (no manual JSONL edits) and gate seed quality with `br lint --json` (no unresolved required-section findings)
 
 ### 0.2 Bootstrap
 
@@ -150,7 +150,8 @@ The Phase 2 completion PR MUST include or link all of:
    Phase 2 completion requirement.
 6. Bead-closure evidence index mapping each closed Phase 2 bead to:
    - unit-test command/output reference
-   - e2e script command/output reference
+   - e2e script command/output reference, or explicit `N/A` justification for
+     pure-function beads
    - structured log artifact reference, or explicit `N/A` justification for
      pure-function beads with no runtime logging surface
 
@@ -171,6 +172,10 @@ Phase 2 evidence MUST be submitted in a deterministic review format.
    - `proptest-summary.txt` (property test counts, failures, repro seeds)
    - `fuzz-summary.txt` (target name, runtime, crashes, corpus notes)
    - `openssh-fixture-parse.txt` (fixture source and parser outcome)
+   - `e2e-summary.txt` (executed e2e commands + outcomes, or explicit `N/A` for
+     pure-function Phase 2 beads)
+   - `structured-log-summary.txt` (log artifact references + field coverage, or
+     explicit `N/A` for pure-function Phase 2 beads)
 3. Each file MUST include provenance header fields:
    - `git_sha`
    - `utc_timestamp`
