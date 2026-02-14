@@ -119,6 +119,8 @@ Phase 2 MAY be marked complete only when all criteria below are met.
 2. `fsh-error`:
    - `FshError` and `ParseError` taxonomies are defined with structured variants
      suitable for transport/auth/channel/wire boundaries.
+   - `ParseError` is exposed through the `fsh-error` API surface and MAY be
+     re-exported from `fsh-types` to keep Phase 2 crate dependencies acyclic.
    - Externally observable failures map deterministically to SSH disconnect
      reason codes (RFC 4253 §11.1), with one documented stable fallback mapping
      for otherwise-unclassified internal errors.
@@ -131,8 +133,8 @@ Phase 2 MAY be marked complete only when all criteria below are met.
    - Context-dependent message ranges (30-49, 60-79) preserve opaque
      method-specific payload bytes in Phase 2.
    - Parsing remains pure (no network I/O) and bounded by explicit size checks.
-   - Unsupported critical message classes fail closed with deterministic mapped
-     disconnect behavior.
+   - Unsupported critical message classes fail closed with deterministic
+     `ParseError` classes suitable for higher-layer disconnect mapping per Section 15 of `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`.
 4. Evidence and tests:
    - Byte-for-byte round-trip tests for each Phase 2 message struct.
    - Property tests (`proptest`) for valid message generation/round-trip.
