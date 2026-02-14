@@ -259,7 +259,9 @@ Rules:
      expand only when evidence demands it.
 4. **Mandatory acceptance contract for every implementation bead**:
    - Unit-test scope and exact command set (including expected outcomes).
-   - E2E script scope and executable command set runnable from repo root.
+   - E2E script scope and executable command set runnable from repo root (or
+     explicit `N/A` + justification for pure-function beads with no runtime
+     integration surface).
    - Structured logging requirements and required fields:
      `trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`,
      `latency_ns`, `artifact_refs` (or explicit `N/A` + justification for

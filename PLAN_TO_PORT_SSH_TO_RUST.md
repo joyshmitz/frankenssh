@@ -73,7 +73,9 @@ Beads graph MUST be initialized and reviewable.
 - [ ] Keep seed graph acyclic (`br dep cycles --json` returns empty cycle set)
 - [ ] Require each implementation bead to include:
   - unit-test commands and expected outcomes (including deterministic seeds where applicable)
-  - e2e script path(s), repo-root command lines, and expected outcomes
+  - e2e script path(s), repo-root command lines, and expected outcomes (or
+    explicit `N/A` + justification for pure-function beads with no runtime
+    integration surface)
   - structured logging contract (`trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`, `latency_ns`, `artifact_refs`) or explicit `N/A` + justification for pure-function beads
   - evidence artifact location(s) (repo path and/or CI artifact URL)
 - [ ] Map every seed bead to at least one `PLAN` phase item and one `FEATURE_PARITY` row
