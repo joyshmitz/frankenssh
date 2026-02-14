@@ -61,7 +61,7 @@
 - [Appendices](#appendices)
   - [A. Glossary](#a-glossary)
   - [B. Reference Materials](#b-reference-materials)
-  - [C. Companion Document Stubs](#c-companion-document-stubs)
+  - [C. Companion Document Status](#c-companion-document-status)
 
 ---
 
@@ -71,9 +71,9 @@
 
 FrankenSSH follows the same four-document methodology proven by the FrankenFS
 project (a memory-safe Rust reimplementation of ext4/btrfs with block-level
-MVCC and RaptorQ self-healing, currently at 46.7% parity across 75 tracked
-capabilities). The methodology was designed to prevent the two failure modes
-of large-scale rewrites:
+MVCC and RaptorQ self-healing, plus quantitative parity tracking). The
+methodology was designed to prevent the two failure modes of large-scale
+rewrites:
 
 1. **Line-by-line translation** — produces unidiomatic Rust that inherits C's
    design flaws without gaining Rust's safety guarantees.
@@ -87,14 +87,14 @@ The four documents, in dependency order:
 | 1 | `EXISTING_SSH_STRUCTURE.md` | **Behavioral extraction** from legacy code. Documents WHAT the legacy system does (packet formats, state machines, algorithm negotiation, error conditions) without prescribing HOW to implement it in Rust. | Before any Rust code |
 | 2 | `PROPOSED_ARCHITECTURE.md` | **Idiomatic Rust architecture.** Crate map, dependency DAG, trait hierarchy, data-flow diagrams. Designed from the behavioral spec, not from C's module structure. | After behavior extraction |
 | 3 | `PLAN_TO_PORT_SSH_TO_RUST.md` | **Operational plan.** Scope, explicit exclusions, source metrics, phased delivery with acceptance criteria, cross-cutting concerns, risk register, success criteria. | After architecture design |
-| 4 | `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` | **Canonical normative specification.** Supersedes all other documents where conflicts exist. The single source of truth for what FrankenSSH MUST do. | Continuously maintained |
+| 4 | `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` | **Canonical normative specification.** Supersedes all other documents where conflicts exist. The single source of truth for what FrankenSSH MUST do. | Continuously maintained (once authored; currently pending) |
 
 ### 1.1 Document Lifecycle
 
 - Documents 1-3 are written **before** significant implementation begins.
 - Document 4 is the living normative spec — updated as implementation reveals
   behavioral nuances not captured in the initial extraction.
-- All four documents are committed to the repository root.
+- Documents 1-3 are committed in the repository root today; document 4 is committed at the root once authored.
 - Any change that alters protocol behavior MUST update the relevant documents
   in the same commit.
 
@@ -138,7 +138,8 @@ Instead:
 
 ### 2.2 No Ambient Authority
 
-Every I/O operation accepts `&asupersync::Cx` as its first parameter, providing:
+Target architecture: every I/O operation accepts `&asupersync::Cx` as its first
+parameter, providing:
 
 - **Cooperative cancellation:** Operations check `cx.checkpoint()` at yield
   points. A cancelled Cx causes `FshError::Cancelled`.
@@ -146,6 +147,9 @@ Every I/O operation accepts `&asupersync::Cx` as its first parameter, providing:
   must complete within N seconds). Cx carries these deadlines.
 - **Deterministic testing:** The asupersync lab runtime enables reproducible
   scheduling for testing race conditions in channel multiplexing.
+
+Current bootstrap status note: `asupersync` integration is planned/deferred in
+the workspace dependency snapshot; this section describes the intended contract.
 
 ### 2.3 Zero Unsafe Code
 
@@ -468,18 +472,18 @@ These RFCs define the normative protocol behavior:
 | 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`; binary read/write helpers (`read_u32`, `read_string`, `write_mpint`); SSH constants | `serde`, `thiserror` | 2 |
 | 2 | `fsh-error` | `FshError` enum with SSH disconnect reason code mapping; `Result<T>` alias | `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parsing/serialization (no I/O): `SshPacket`, `MessageType` dispatch, all SSH message structs; padding; `WirePacket` trait | `fsh-types`, `fsh-error`, `serde` | 2 |
-| 4 | `fsh-crypto` | Cipher suite abstraction: `CipherSuite` trait, `chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes256-ctr`+`hmac-sha2-256`; key derivation (`kdf_hash`); host key types (Ed25519, RSA-SHA2, ECDSA); hybrid PQ KEX (ML-KEM-768 + X25519) | `fsh-types`, `fsh-error`, `ring`, `chacha20poly1305`, `aes-gcm`, `ml-kem`, `x25519-dalek`, `ed25519-dalek`, `sha2` | 3 |
-| 5 | `fsh-transport` | SSH transport layer: version exchange, algorithm negotiation, key exchange orchestration, `Transport<S>` type-state machine, rekey, sequence number management, `EncryptedTransport` (encrypt/decrypt/MAC per-packet) | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `asupersync` | 4 |
+| 4 | `fsh-crypto` | Cipher suite abstraction: `CipherSuite` trait, `chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes256-ctr`+`hmac-sha2-256`; key derivation (`kdf_hash`); host key types (Ed25519, RSA-SHA2, ECDSA); hybrid PQ KEX (ML-KEM-768 + X25519 planned) | `fsh-types`, `fsh-error`, `ring`, `chacha20poly1305`, `aes-gcm`, `x25519-dalek`, `ed25519-dalek`, `sha2` | 3 |
+| 5 | `fsh-transport` | SSH transport layer: version exchange, algorithm negotiation, key exchange orchestration, `Transport<S>` type-state machine, rekey, sequence number management, `EncryptedTransport` (encrypt/decrypt/MAC per-packet) | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 4 |
 | 6 | `fsh-auth` | Authentication protocol: `Authenticator` trait, pubkey auth, password auth, keyboard-interactive, certificate validation; partial success handling; auth banner; attempt limiting | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `fsh-transport` | 5 |
-| 7 | `fsh-channel` | Channel multiplexing: `ChannelManager`, channel open/close/data/EOF/window-adjust; flow control (window size management); channel types (session, direct-tcpip, forwarded-tcpip) | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-transport`, `asupersync` | 5 |
-| 8 | `fsh-session` | Session channel operations: PTY allocation, command exec, env vars, signal forwarding, exit status/signal, subsystem dispatch | `fsh-types`, `fsh-error`, `fsh-channel`, `asupersync` | 6 |
-| 9 | `fsh-sftp` | SFTP subsystem: v3 (mandatory) and v6 (optional) protocol, file handle management, stat/read/write/rename/symlink/mkdir/rmdir, request-response correlation | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-channel`, `asupersync` | 6 |
-| 10 | `fsh-forward` | Port forwarding: local (`direct-tcpip`), remote (`forwarded-tcpip`), dynamic (SOCKS5 proxy); forwarding channel lifecycle | `fsh-types`, `fsh-error`, `fsh-channel`, `asupersync` | 6 |
-| 11 | `fsh-agent` | SSH agent protocol: key listing (`SSH2_AGENTC_REQUEST_IDENTITIES`), signing (`SSH2_AGENTC_SIGN_REQUEST`), key add/remove, key constraints (lifetime, confirm); agent connection management | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `asupersync` | 6 |
-| 12 | `fsh-server` | SSH server (sshd equivalent): TCP listener, per-connection session management, host key loading, auth dispatch, subsystem dispatch, privilege separation model | `fsh-types`, `fsh-error`, `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `asupersync`, `tokio` | 7 |
-| 13 | `fsh-client` | SSH client (ssh equivalent): connection establishment, config parsing, known_hosts management, agent forwarding, multiplexed connection sharing, interactive/batch mode | `fsh-types`, `fsh-error`, `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `fsh-agent`, `asupersync`, `tokio` | 7 |
-| 14 | `fsh` | Public API facade: re-exports core functionality; stable external interface for embedding FrankenSSH as a library | `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `fsh-sftp`, `fsh-forward`, `fsh-agent` | 8 |
-| 15 | `fsh-harness` | Conformance test harness: automated testing against real OpenSSH client/server; RFC test vectors; fuzz targets; performance benchmarks | `fsh`, `fsh-wire`, `fsh-crypto`, `anyhow`, `serde`, `serde_json`, `criterion`, `proptest` | 8 |
+| 7 | `fsh-channel` | Channel multiplexing: `ChannelManager`, channel open/close/data/EOF/window-adjust; flow control (window size management); channel types (session, direct-tcpip, forwarded-tcpip) | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-transport`, `asupersync` (planned) | 5 |
+| 8 | `fsh-session` | Session channel operations: PTY allocation, command exec, env vars, signal forwarding, exit status/signal, subsystem dispatch | `fsh-types`, `fsh-error`, `fsh-channel`, `asupersync` (planned) | 6 |
+| 9 | `fsh-sftp` | SFTP subsystem: v3 (mandatory) and v6 (optional) protocol, file handle management, stat/read/write/rename/symlink/mkdir/rmdir, request-response correlation | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-channel`, `asupersync` (planned) | 6 |
+| 10 | `fsh-forward` | Port forwarding: local (`direct-tcpip`), remote (`forwarded-tcpip`), dynamic (SOCKS5 proxy); forwarding channel lifecycle | `fsh-types`, `fsh-error`, `fsh-channel`, `asupersync` (planned) | 6 |
+| 11 | `fsh-agent` | SSH agent protocol: key listing (`SSH2_AGENTC_REQUEST_IDENTITIES`), signing (`SSH2_AGENTC_SIGN_REQUEST`), key add/remove, key constraints (lifetime, confirm); agent connection management | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 6 |
+| 12 | `fsh-server` | SSH server (sshd equivalent): TCP listener, per-connection session management, host key loading, auth dispatch, subsystem dispatch, privilege separation model | `fsh-types`, `fsh-error`, `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `tokio` | 7 |
+| 13 | `fsh-client` | SSH client (ssh equivalent): connection establishment, config parsing, known_hosts management, agent forwarding, multiplexed connection sharing, interactive/batch mode | `fsh-types`, `fsh-error`, `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `fsh-agent`, `tokio` | 7 |
+| 14 | `fsh-harness` | Conformance test harness: automated testing against real OpenSSH client/server; RFC test vectors; fuzz targets; performance benchmarks | `frankenssh`, `fsh-wire`, `fsh-crypto`, `serde`, `serde_json`, `criterion`, `proptest` | 8 |
+| 15 | `frankenssh` | Public API facade: re-exports core functionality; stable external interface for embedding FrankenSSH as a library | `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `fsh-sftp`, `fsh-forward`, `fsh-agent` | 8 |
 
 ---
 
@@ -528,8 +532,8 @@ These RFCs define the normative protocol behavior:
               |                     |
               +---------+-----------+
                         |
-                  +-----v-----+      +--------------+
-                  |    fsh    |      | fsh-harness  |
+                  +-----------+      +--------------+
+                  |frankenssh |      | fsh-harness  |
                   | (facade)  |------| (conformance)|
                   +-----------+      +--------------+
 ```
@@ -548,7 +552,7 @@ These RFCs define the normative protocol behavior:
    but not on `fsh-transport` directly.** They see channels, not raw transport.
 6. **`fsh-server` and `fsh-client` are integration crates.** They wire
    together the domain crates but contain minimal business logic.
-7. **`fsh-harness` depends on `fsh` (the public facade) and tests the
+7. **`fsh-harness` depends on `frankenssh` (the public facade) and tests the
    external interface, not internals.**
 
 ---
@@ -841,7 +845,7 @@ impl<S: PostEncryptionState> Session<S> {
 | 15-crate Cargo workspace | Modular, independently testable crates |
 | SSH server binary (`fsh-server`) | Accepts SSH connections, serves shell/SFTP/forwarding |
 | SSH client binary (`fsh-client`) | Connects to SSH servers, interactive and batch mode |
-| Public API library (`fsh`) | Embeddable SSH for other Rust programs |
+| Public API library (`frankenssh`) | Embeddable SSH for other Rust programs |
 | Conformance harness (`fsh-harness`) | Automated testing against real OpenSSH |
 | SFTP subsystem | File transfer compatible with any SFTP client/server |
 | SSH agent | Key management compatible with `ssh-add` / `ssh-agent` |
@@ -870,8 +874,8 @@ impl<S: PostEncryptionState> Session<S> {
 - **OS:** Linux (x86_64, aarch64) primary; macOS secondary
 - **Rust edition:** 2024
 - **MSRV:** 1.85 (required by Edition 2024)
-- **Async runtime:** `tokio` for production I/O; `asupersync` lab runtime for
-  deterministic testing
+- **Async runtime:** `tokio` for production I/O; `asupersync` is planned for
+  deterministic lab testing and is currently deferred/commented in workspace dependencies
 
 ---
 
@@ -879,13 +883,13 @@ impl<S: PostEncryptionState> Session<S> {
 
 | Crate | Role | Version Pin |
 |-------|------|-------------|
-| `asupersync` | Cx capability contexts, cooperative cancellation, lab runtime | workspace |
+| `asupersync` | Cx capability contexts, cooperative cancellation, lab runtime (planned/deferred in current workspace snapshot) | workspace path (deferred) |
 | `tokio` | Async TCP I/O, production runtime | ^1 |
 | `ring` | Cryptographic primitives (AES-GCM, SHA-2, HMAC, RSA verify) | ^0.17 |
 | `chacha20poly1305` | ChaCha20-Poly1305 AEAD | ^0.10 |
 | `x25519-dalek` | X25519 ECDH key exchange | ^2 |
 | `ed25519-dalek` | Ed25519 key signing/verification | ^2 |
-| `ml-kem` | ML-KEM-768 post-quantum KEM (NIST FIPS 203) | latest stable |
+| `ml-kem` | ML-KEM-768 post-quantum KEM (NIST FIPS 203) | planned (crate selection deferred) |
 | `sha2` | SHA-256/SHA-512 hash functions | ^0.10 |
 | `aes-gcm` | AES-256-GCM AEAD | ^0.10 |
 | `serde` + `serde_json` | Configuration, fixtures, diagnostics | ^1 |
@@ -1156,14 +1160,14 @@ protocol.
 | Crate | Key Items |
 |-------|-----------|
 | `fsh-harness` | Automated conformance tests (see §31), RFC test vectors, fuzz targets, performance benchmarks (Criterion), interoperability matrix |
-| `fsh` | Stable public API facade, re-exports, documentation, examples |
+| `frankenssh` | Stable public API facade, re-exports, documentation, examples |
 
 **Acceptance Criteria:**
 - Conformance harness passes >= 95% of test vectors.
 - Interoperability matrix covers OpenSSH 8.x, 9.x on Linux and macOS.
 - Public API has doc comments on all public items.
 - `cargo doc` generates complete documentation.
-- `fsh` crate can be used as a library to build a custom SSH client in < 50
+- `frankenssh` crate can be used as a library to build a custom SSH client in < 50
   lines.
 
 **LOC:** ~4,000 | **Duration:** 2-3 weeks
@@ -1224,7 +1228,7 @@ Phase 8: Harness & Public API
 | 5 — Auth & Channels | fsh-auth, fsh-channel | 5,000 | 17,300 |
 | 6 — Subsystems | fsh-session, fsh-sftp, fsh-forward, fsh-agent | 6,000 | 23,300 |
 | 7 — Server & Client | fsh-server, fsh-client | 5,000 | 28,300 |
-| 8 — Harness & API | fsh-harness, fsh | 4,000 | 32,300 |
+| 8 — Harness & API | fsh-harness, frankenssh | 4,000 | 32,300 |
 | **Tests (all phases)** | | **~4,000** | **36,300** |
 
 **Comparison with Legacy Source:**
@@ -1871,10 +1875,10 @@ The following operations MUST be constant-time (independent of secret values):
 | **High-risk subsystem** | MVCC + SSI conflict detection | Crypto + key exchange + auth |
 | **Conformance reference** | `dumpe2fs`, `fsck.ext4`, kernel ext4 driver | OpenSSH `ssh`, `sshd` |
 | **`#![forbid(unsafe_code)]`** | Yes | Yes |
-| **Cx integration** | `&asupersync::Cx` on all I/O | `&asupersync::Cx` on all I/O |
+| **Cx integration** | Target contract: `&asupersync::Cx` on all I/O | Target contract: `&asupersync::Cx` on all I/O |
 | **Doc methodology** | 4-document spec-first | 4-document spec-first |
 | **Feature parity tracking** | `FEATURE_PARITY.md` + CI gate | `FEATURE_PARITY.md` + CI gate |
-| **Parity at proposal** | 46.7% (35/75 capabilities) | 0% (0/58 capabilities) |
+| **Parity tracking** | Quantitative parity report discipline | `FEATURE_PARITY.md` (currently 0/58) |
 | **Estimated Rust LOC** | ~45,500 | ~36,300 |
 | **Reduction from C** | 22% of legacy LOC | 22% of legacy LOC |
 | **Crate count** | 21 (19 core + 2 legacy wrappers) | 15 |
@@ -1916,7 +1920,7 @@ These FrankenFS patterns apply to FrankenSSH without modification:
 
 ### 35.3 Lessons Learned from FrankenFS
 
-These insights from the FrankenFS project (at 46.7% parity) inform the
+These insights from the FrankenFS project experience inform the
 FrankenSSH approach:
 
 1. **Spec documents drift.** The `COMPREHENSIVE_SPEC` must be the single source
@@ -1975,14 +1979,13 @@ FrankenSSH approach:
 | Cahill, Rohm & Fekete, "SSI" (2008) | Referenced for methodology parallel with FrankenFS |
 | `thrussh` / `russh` Rust SSH libraries | Prior art in Rust SSH implementations |
 
-## C. Companion Document Stubs
+## C. Companion Document Status
 
-When implementation begins, these four documents will be created:
+The four-document workflow is already active in this repository:
 
 ### C.1 `EXISTING_SSH_STRUCTURE.md`
 
-Full behavioral extraction from OpenSSH source. Seeds from Part VI of this
-proposal. Will expand to cover:
+Behavioral extraction from OpenSSH source. Should continue expanding to cover:
 - Every message type with complete field layouts
 - State machine transition tables
 - Algorithm negotiation edge cases
@@ -1991,8 +1994,7 @@ proposal. Will expand to cover:
 
 ### C.2 `PROPOSED_ARCHITECTURE.md`
 
-Full crate architecture. Seeds from Part III of this proposal. Will expand to
-cover:
+Current crate architecture document. Should continue expanding to cover:
 - Complete trait signatures (not just illustrative)
 - Data-flow diagrams (handshake, data transfer, rekey, SFTP)
 - Module structure within each crate
@@ -2000,8 +2002,7 @@ cover:
 
 ### C.3 `PLAN_TO_PORT_SSH_TO_RUST.md`
 
-Operational porting plan. Seeds from Part V of this proposal. Will expand to
-cover:
+Operational porting plan. Should continue expanding to cover:
 - Granular TODO checklist (per-crate, per-function)
 - Phase acceptance test scripts
 - CI pipeline configuration
@@ -2009,12 +2010,11 @@ cover:
 
 ### C.4 `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`
 
-Canonical normative specification. Seeds from Parts III, VI, VII of this
-proposal. Will be the single source of truth once writing begins.
+Canonical normative specification target. This file is not yet present; once
+written, it supersedes other docs on conflicts.
 
 ---
 
 *This document is the top-level proposal for FrankenSSH. It defines scope,
-methodology, architecture, and delivery plan. Implementation begins with the
-four companion documents described in Appendix C, following the four-document
-methodology proven by FrankenFS.*
+methodology, architecture, and delivery plan, and is intended to stay aligned
+with the active companion documents in the repository.*

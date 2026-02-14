@@ -86,7 +86,7 @@ Every meaningful implementation decision must apply all four methods:
    - One optimization lever per change
    - Behavior-isomorphism proof: conformance harness must pass identically before and after
 3. **RaptorQ-everywhere durability:**
-   - Long-lived session keys, host key databases, and known_hosts state carry repair-symbol sidecars where durable storage is involved
+   - Durable trust artifacts (host key databases, known_hosts state, session resumption token stores, conformance/benchmark evidence bundles) carry repair-symbol sidecars
    - Decode proofs for any recovery or resumption path
    - Background integrity verification for persistent credential stores
 4. **frankenlibc/frankenfs security-compatibility doctrine:**
@@ -108,6 +108,12 @@ Crown-jewel innovations:
 OpenSSH portable is the behavioral reference:
 - Path: `legacy_openssh_code/openssh-portable`
 - Upstream: `https://github.com/openssh/openssh-portable`
+
+The oracle checkout is expected to be local and gitignored. If absent, provision:
+```bash
+mkdir -p legacy_openssh_code
+git clone https://github.com/openssh/openssh-portable legacy_openssh_code/openssh-portable
+```
 
 OpenSSH defines "correct" for every ambiguous RFC passage. When RFCs conflict with OpenSSH behavior in practice, document the divergence and default to OpenSSH's interpretation for strict mode.
 
@@ -205,11 +211,17 @@ SSH operates in an adversarial network. Every byte from the peer is potentially 
 
 ## RaptorQ-Everywhere Contract
 
-For any durable artifact that FrankenSSH manages (host key databases, known_hosts state, persistent session resumption tokens, serialized configurations):
+For any durable artifact that FrankenSSH manages (host key databases, known_hosts state, persistent session resumption tokens, serialized configurations, conformance/benchmark evidence bundles):
 
 1. **Repair-symbol sidecars** — fountain-coded redundancy alongside the primary artifact.
 2. **Decode proofs** — verifiable recovery path for any restoration operation.
 3. **Background integrity scrub** — periodic verification of persistent credential stores.
+
+Required outputs:
+
+1. Repair-symbol generation manifest.
+2. Integrity scrub report.
+3. Decode proof artifact for each recovery event.
 
 For ephemeral session state (in-flight keys, channel buffers), RaptorQ does not apply — forward secrecy and zeroization govern those lifecycles instead.
 

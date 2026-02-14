@@ -20,14 +20,44 @@
 
 Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 
-### 0.1 Bootstrap
+### 0.1 Documentation and Consistency (Blocker Before Deep Implementation)
+
+- [x] Canonicalize public facade crate naming across docs (`frankenssh`; no phantom `fsh` facade crate)
+- [x] Reconcile dependency claims vs workspace reality (`asupersync` currently deferred/commented in `Cargo.toml`; `ml-kem` planned but not yet selected in workspace dependencies)
+- [x] Add explicit legacy-oracle bootstrap note for `legacy_openssh_code/openssh-portable` and clarify that the checkout is local/gitignored
+- [x] Remove/repair stale claims that companion docs "will be created later" when they already exist
+- [ ] CI workflow under `.github/workflows` (fmt/check/clippy/test)
+
+### 0.1.1 Drift Audit Checklist (Mechanical)
+
+Run from repo root whenever doc drift is suspected:
+
+```bash
+# Workspace membership sanity.
+cargo metadata --no-deps --format-version 1 | jq '.workspace_members | length'
+# Crates directory count (expect 14 here; the 15th crate `frankenssh` is at workspace root).
+# Use `find` to avoid shell aliases (e.g., `ls` -> `eza`) skewing the count.
+find crates -mindepth 1 -maxdepth 1 -type d | wc -l
+
+# Facade crate naming drift (`frankenssh` vs phantom `fsh` facade).
+rg -n '`fsh`|phantom `fsh` facade|public facade' -S *.md
+
+# Dependency drift against Cargo.toml snapshot.
+rg -n 'ml-kem|asupersync|anyhow' -S *.md
+rg -n 'asupersync|ml-kem|anyhow' -S Cargo.toml crates/*/Cargo.toml
+
+# Legacy oracle path/bootstrap drift.
+rg -n 'legacy_openssh_code/openssh-portable|git clone https://github.com/openssh/openssh-portable' -S *.md
+test -d legacy_openssh_code/openssh-portable || echo "missing local OpenSSH oracle checkout (run bootstrap clone command)"
+```
+
+### 0.2 Bootstrap
 
 - [x] Initialize git repo, workspace Cargo.toml, rust-toolchain.toml
 - [x] Create all 15 crate stubs with correct inter-crate dependencies
 - [x] Write AGENTS.md, README.md, porting docs
-- [ ] CI pipeline (fmt, check, clippy, test)
 
-### 0.2 Types & Wire (Phase 2)
+### 0.3 Types & Wire (Phase 2)
 
 - [ ] `fsh-types`: newtypes (SessionId, ChannelId, SeqNum, MessageType, WindowSize)
 - [ ] `fsh-types`: binary helpers (read_u32, read_string, read_mpint, write_*)
@@ -36,7 +66,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [ ] Round-trip tests for every message type
 - [ ] Fuzz target for packet parsing
 
-### 0.3 Crypto (Phase 3)
+### 0.4 Crypto (Phase 3)
 
 - [ ] CipherSuite trait + chacha20-poly1305 implementation
 - [ ] CipherSuite: aes256-gcm, aes256-ctr+hmac
@@ -46,7 +76,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [ ] Host key types: Ed25519, RSA-SHA2, ECDSA
 - [ ] RFC test vectors for all algorithms
 
-### 0.4 Transport (Phase 4)
+### 0.5 Transport (Phase 4)
 
 - [ ] Version exchange
 - [ ] Algorithm negotiation (KexInit)
@@ -56,7 +86,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [ ] Rekey support
 - [ ] Strict KEX extension
 
-### 0.5 Auth & Channels (Phase 5)
+### 0.6 Auth & Channels (Phase 5)
 
 - [ ] Pubkey authentication (two-phase)
 - [ ] Password authentication
@@ -65,20 +95,20 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [ ] Channel multiplexing and flow control
 - [ ] Window management
 
-### 0.6 Session & Subsystems (Phase 6)
+### 0.7 Session & Subsystems (Phase 6)
 
 - [ ] PTY allocation, exec, shell, env, signals
 - [ ] SFTP v3 protocol
 - [ ] Local/remote/dynamic port forwarding
 - [ ] SSH agent protocol
 
-### 0.7 Server & Client (Phase 7)
+### 0.8 Server & Client (Phase 7)
 
 - [ ] fsh-server: TCP listener, host key loading, auth dispatch
 - [ ] fsh-client: connection, config parsing, known_hosts
 - [ ] Self-interop (fsh-client ↔ fsh-server)
 
-### 0.8 Harness & API (Phase 8)
+### 0.9 Harness & API (Phase 8)
 
 - [ ] Conformance harness vs real OpenSSH
 - [ ] Public API facade (frankenssh crate)
@@ -112,3 +142,24 @@ acceptance criteria, LOC estimates, risks, and duration.
 
 See `FRANKENSSH_PROPOSAL.md` Part VIII for testing strategy, conformance
 harness design, and performance targets.
+
+## 5. RaptorQ Durability Status (Current)
+
+Current status: contract specified; implementation deferred until durable SSH
+artifact stores land.
+
+Durable artifact scope for FrankenSSH:
+
+1. `known_hosts` and host-key trust databases
+2. Persistent session resumption token stores
+3. Conformance/benchmark evidence artifacts
+
+Required artifact envelope (when implemented):
+
+1. Repair-symbol generation manifest
+2. Integrity scrub report
+3. Decode proof artifact for each recovery event
+
+Near-term next step:
+
+1. Add sidecar generation for the first conformance/benchmark artifact pair.

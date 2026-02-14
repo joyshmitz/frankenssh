@@ -2,9 +2,23 @@
 
 ## 1. Legacy Oracle
 
-- Root: `/data/projects/frankenssh/legacy_openssh_code/openssh-portable`
+- Root (workspace-relative): `legacy_openssh_code/openssh-portable`
 - Upstream: `https://github.com/openssh/openssh-portable`
 - Role: behavioral oracle for handshake sequences, auth flows, channel behavior, error responses, and wire format parity.
+
+### 1.1 Local Checkout Policy
+
+The OpenSSH oracle checkout is a **local, gitignored workspace dependency** and is
+not required to be committed into this repository.
+
+If the path is missing on a fresh clone, provision it locally:
+
+```bash
+mkdir -p legacy_openssh_code
+git clone https://github.com/openssh/openssh-portable legacy_openssh_code/openssh-portable
+```
+
+Conformance preflight MUST assert this path exists locally before harness runs.
 
 ## 2. Subsystem Map
 

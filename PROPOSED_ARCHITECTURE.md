@@ -14,17 +14,21 @@
 | 2 | `fsh-error` | `FshError` enum, disconnect reason mapping | `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parse/serialize (no I/O) | `fsh-types`, `fsh-error` | 2 |
 | 4 | `fsh-crypto` | Cipher suites, KEX, host keys, PQ hybrid | `fsh-types`, `fsh-error`, `ring`, crypto crates | 3 |
-| 5 | `fsh-transport` | Type-state machine, encrypted I/O, rekey | `fsh-wire`, `fsh-crypto`, `asupersync` | 4 |
+| 5 | `fsh-transport` | Type-state machine, encrypted I/O, rekey | `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 4 |
 | 6 | `fsh-auth` | Auth methods, certificate validation | `fsh-wire`, `fsh-crypto`, `fsh-transport` | 5 |
-| 7 | `fsh-channel` | Channel multiplexing, flow control | `fsh-wire`, `fsh-transport`, `asupersync` | 5 |
-| 8 | `fsh-session` | PTY, exec, env, signals, subsystem | `fsh-channel`, `asupersync` | 6 |
-| 9 | `fsh-sftp` | SFTP v3/v6 protocol | `fsh-wire`, `fsh-channel`, `asupersync` | 6 |
-| 10 | `fsh-forward` | Port forwarding (local/remote/dynamic) | `fsh-channel`, `asupersync` | 6 |
-| 11 | `fsh-agent` | SSH agent protocol | `fsh-wire`, `fsh-crypto`, `asupersync` | 6 |
+| 7 | `fsh-channel` | Channel multiplexing, flow control | `fsh-wire`, `fsh-transport`, `asupersync` (planned) | 5 |
+| 8 | `fsh-session` | PTY, exec, env, signals, subsystem | `fsh-channel`, `asupersync` (planned) | 6 |
+| 9 | `fsh-sftp` | SFTP v3/v6 protocol | `fsh-wire`, `fsh-channel`, `asupersync` (planned) | 6 |
+| 10 | `fsh-forward` | Port forwarding (local/remote/dynamic) | `fsh-channel`, `asupersync` (planned) | 6 |
+| 11 | `fsh-agent` | SSH agent protocol | `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 6 |
 | 12 | `fsh-server` | sshd equivalent | `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `tokio` | 7 |
 | 13 | `fsh-client` | ssh equivalent | `fsh-transport`, `fsh-auth`, `fsh-channel`, `fsh-session`, `fsh-agent`, `tokio` | 7 |
 | 14 | `fsh-harness` | Conformance tests vs OpenSSH | `frankenssh`, `criterion`, `proptest` | 8 |
 | 15 | `frankenssh` | Public API facade | re-exports core crates | 8 |
+
+`asupersync` references above are architectural targets; in the current
+workspace snapshot these dependencies are intentionally commented/deferred in
+`Cargo.toml` until build-host availability is guaranteed.
 
 ---
 
