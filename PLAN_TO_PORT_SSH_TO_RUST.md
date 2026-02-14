@@ -65,9 +65,10 @@ ls -1 .github/workflows/*.yml
 ### 0.3 Types & Wire (Phase 2)
 
 - [ ] `fsh-types`: newtypes (SessionId, ChannelId, SeqNum, MessageType, WindowSize, DisconnectReason)
-- [ ] `fsh-types`: binary helpers (read_u32, read_string, read_name_list, read_mpint, write_*)
-- [ ] `fsh-error`: FshError enum (17 variants), disconnect reason mapping
+- [ ] `fsh-types`: binary helpers (read_u32, read_bool, read_string, read_name_list, read_mpint, write_*)
+- [ ] `fsh-error`: `FshError` + `ParseError` taxonomy, disconnect reason mapping
 - [ ] `fsh-wire`: all SSH message structs with WirePacket trait
+- [ ] `fsh-wire`: types 30-49 and 60-79 follow opaque payload strategy (context-dependent semantics deferred)
 - [ ] Round-trip tests for every message type
 - [ ] Property tests (`proptest`) for parser/serializer round-trip invariants
 - [ ] Fuzz target for packet parsing
@@ -85,8 +86,9 @@ Phase 2 MAY be marked complete only when all criteria below are met.
    - Crypto-specific key-family typing is out of Phase 2 scope; wire parsing
      treats algorithm names as opaque strings at this phase.
    - Binary helpers exist and are used as the default parse path for wire code:
-     `read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`,
-     `write_string`, `write_mpint`, `write_name_list`.
+     `read_u32`, `read_bool`, `read_string`, `read_name_list`, `read_mpint`,
+     `write_u32`, `write_bool`, `write_string`, `write_mpint`,
+     `write_name_list`.
    - Helpers are panic-free on malformed input and enforce checked bounds before
      any allocation.
 2. `fsh-error`:
@@ -101,6 +103,8 @@ Phase 2 MAY be marked complete only when all criteria below are met.
    - `WirePacket` parse/serialize/message-type behavior exists for the complete
      Phase 2 message baseline defined in
      `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` Section 11.4.
+   - Context-dependent message ranges (30-49, 60-79) preserve opaque
+     method-specific payload bytes in Phase 2.
    - Parsing remains pure (no network I/O) and bounded by explicit size checks.
    - Unsupported critical message classes fail closed with deterministic mapped
      disconnect behavior.

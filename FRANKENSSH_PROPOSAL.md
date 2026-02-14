@@ -476,7 +476,7 @@ These RFCs define the normative protocol behavior:
 
 | # | Crate | Role | Key Dependencies | Primary Phase |
 |---|-------|------|-----------------|--------------|
-| 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`, `DisconnectReason`; binary read/write helpers (`read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_string`, `write_mpint`, `write_name_list`); SSH constants | `serde`, `thiserror` | 2 |
+| 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`, `DisconnectReason`; binary read/write helpers (`read_u32`, `read_bool`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_bool`, `write_string`, `write_mpint`, `write_name_list`); SSH constants | `serde`, `thiserror` | 2 |
 | 2 | `fsh-error` | `FshError` enum with SSH disconnect reason code mapping; `Result<T>` alias | `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parsing/serialization (no I/O): `SshPacket`, `MessageType` dispatch, all SSH message structs; padding; `WirePacket` trait | `fsh-types`, `fsh-error`, `serde` | 2 |
 | 4 | `fsh-crypto` | Cipher suite abstraction: `CipherSuite` trait, `chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes256-ctr`+`hmac-sha2-256`; key derivation (`kdf_hash`); host key types (Ed25519, RSA-SHA2, ECDSA); hybrid PQ KEX (ML-KEM-768 + X25519 planned) | `fsh-types`, `fsh-error`, `ring`, `chacha20poly1305`, `aes-gcm`, `x25519-dalek`, `ed25519-dalek`, `sha2` | 3 |
@@ -680,6 +680,9 @@ pub trait ChannelHandler: Send {
 
 ### 12.1 `FshError` Enum
 
+Illustrative baseline shape (exact variant inventory may grow as long as
+Section 12.2 mapping guarantees remain deterministic).
+
 ```rust
 #[derive(Debug, thiserror::Error)]
 pub enum FshError {
@@ -738,18 +741,24 @@ pub enum FshError {
 
 ### 12.2 SSH Disconnect Reason Mapping
 
-Every `FshError` maps to an SSH disconnect reason code (RFC 4253 §11.1):
+Every externally observable `FshError` class maps to an SSH disconnect reason
+code (RFC 4253 §11.1):
 
-| FshError Variant | SSH Disconnect Reason | Code |
+| FshError Class / Variant | SSH Disconnect Reason | Code |
 |-----------------|----------------------|------|
 | `Protocol` | `SSH_DISCONNECT_PROTOCOL_ERROR` | 2 |
 | `KexFailed` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` | 3 |
+| `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` | 3 |
 | `Crypto` | `SSH_DISCONNECT_MAC_ERROR` | 5 |
-| `AuthFailed` | `SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE` | 14 |
+| `ServiceNotAvailable` | `SSH_DISCONNECT_SERVICE_NOT_AVAILABLE` | 7 |
+| `VersionMismatch` | `SSH_DISCONNECT_PROTOCOL_VERSION_NOT_SUPPORTED` | 8 |
 | `HostKeyVerification` | `SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE` | 9 |
+| `ConnectionLost` | `SSH_DISCONNECT_CONNECTION_LOST` | 10 |
 | `Timeout` | `SSH_DISCONNECT_BY_APPLICATION` | 11 |
 | `Cancelled` | `SSH_DISCONNECT_BY_APPLICATION` | 11 |
-| `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` | 3 |
+| `TooManyConnections` | `SSH_DISCONNECT_TOO_MANY_CONNECTIONS` | 12 |
+| `AuthCancelled` | `SSH_DISCONNECT_AUTH_CANCELLED_BY_USER` | 13 |
+| `AuthFailed` | `SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE` | 14 |
 
 ---
 
@@ -970,15 +979,18 @@ parsing/serialization with round-trip fidelity.
 
 | Crate | Key Items |
 |-------|-----------|
-| `fsh-types` | `SessionId(u64)`, `ChannelId(u32)`, `SeqNum(u32)`, `WindowSize(u32)`, `MessageType(u8)`, `DisconnectReason(u32)`; binary helpers (`read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_string`, `write_mpint`, `write_name_list`) |
-| `fsh-error` | `FshError` enum (17 variants), `ParseError` enum, `Result<T>` alias, SSH disconnect reason mapping |
-| `fsh-wire` | All SSH message types as Rust structs implementing `WirePacket`: `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ServiceRequest`, `ServiceAccept`, `UserAuthRequest`, `UserAuthSuccess`, `UserAuthFailure`, `UserAuthBanner`, `ChannelOpen`, `ChannelOpenConfirmation`, `ChannelOpenFailure`, `ChannelData`, `ChannelExtendedData`, `ChannelWindowAdjust`, `ChannelEof`, `ChannelClose`, `ChannelRequest`, `ChannelSuccess`, `ChannelFailure`, `GlobalRequest`, `RequestSuccess`, `RequestFailure`, `Disconnect`, `Ignore`, `Unimplemented`, `Debug` |
+| `fsh-types` | `SessionId(u64)`, `ChannelId(u32)`, `SeqNum(u32)`, `WindowSize(u32)`, `MessageType(u8)`, `DisconnectReason(u32)`; binary helpers (`read_u32`, `read_bool`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_bool`, `write_string`, `write_mpint`, `write_name_list`) |
+| `fsh-error` | `FshError`/`ParseError` taxonomy, `Result<T>` alias, SSH disconnect reason mapping |
+| `fsh-wire` | All SSH message types as Rust structs implementing `WirePacket`: `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ExtInfo`, `ServiceRequest`, `ServiceAccept`, `UserAuthRequest`, `UserAuthSuccess`, `UserAuthFailure`, `UserAuthBanner`, `ChannelOpen`, `ChannelOpenConfirmation`, `ChannelOpenFailure`, `ChannelData`, `ChannelExtendedData`, `ChannelWindowAdjust`, `ChannelEof`, `ChannelClose`, `ChannelRequest`, `ChannelSuccess`, `ChannelFailure`, `GlobalRequest`, `RequestSuccess`, `RequestFailure`, `Disconnect`, `Ignore`, `Unimplemented`, `Debug` |
 
 **Parsing Strategy:**
 - Manual byte-level parsing via `fsh-types` helpers.
 - SSH is big-endian (network byte order) — opposite of ext4.
+- `read_bool` normalizes non-zero input to `true`; `write_bool` emits only 0 or 1.
 - `read_string` returns `&[u8]` with length prefix (u32 length + data).
 - `read_mpint` handles SSH multi-precision integers (sign-extended, big-endian).
+- Context-dependent ranges (30-49 for KEX, 60-79 for auth) keep method-specific
+  payload opaque in Phase 2; semantic decoding is deferred to later phases.
 - All message types define `MESSAGE_TYPE` with the RFC-defined message number.
 
 **Acceptance Criteria:**

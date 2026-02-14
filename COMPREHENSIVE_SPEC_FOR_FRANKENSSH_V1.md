@@ -103,7 +103,9 @@ Strict mode MUST maximize OpenSSH-observable behavior compatibility:
 
 1. Unknown extensions MAY be ignored when OpenSSH-compatible behavior requires.
 2. Negotiation order SHOULD mirror OpenSSH preferences for scoped algorithms.
-3. Rekey cadence SHOULD match OpenSSH defaults for strict mode.
+3. Rekey cadence SHOULD match OpenSSH default semantics (`RekeyLimit default
+   none`): data-volume rekeying is cipher-dependent (typically between 1 GiB and
+   4 GiB), and time-based rekeying is disabled by default.
 4. Host key algorithm availability SHOULD align with deployed OpenSSH behavior.
 
 ### 5.2 Hardened Mode
@@ -228,9 +230,9 @@ Sections 11.2-11.4 are satisfied together.
    `SessionId`, `ChannelId`, `SeqNum`, `WindowSize`, `MessageType`,
    and `DisconnectReason`.
 2. `fsh-types` MUST provide binary helpers for SSH network-byte-order parsing
-   and serialization: `read_u32`, `read_string`, `read_name_list`,
-   `read_mpint`, `write_u32`, `write_string`, `write_mpint`, and
-   `write_name_list`.
+   and serialization: `read_u32`, `read_bool`, `read_string`,
+   `read_name_list`, `read_mpint`, `write_u32`, `write_bool`,
+   `write_string`, `write_mpint`, and `write_name_list`.
 3. Parsing helpers MUST be panic-free on malformed/truncated input and MUST
    return structured parse errors.
 4. Helpers that consume untrusted lengths MUST perform checked bounds validation
@@ -262,13 +264,19 @@ Sections 11.2-11.4 are satisfied together.
    mapped disconnect reasons.
 6. The Phase 2 message baseline MUST include wire structs implementing
    parse/serialize/message-type behavior for:
-   `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ServiceRequest`,
+   `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ExtInfo`, `ServiceRequest`,
    `ServiceAccept`, `UserAuthRequest`, `UserAuthSuccess`, `UserAuthFailure`,
    `UserAuthBanner`, `ChannelOpen`, `ChannelOpenConfirmation`,
    `ChannelOpenFailure`, `ChannelData`, `ChannelExtendedData`,
    `ChannelWindowAdjust`, `ChannelEof`, `ChannelClose`, `ChannelRequest`,
    `ChannelSuccess`, `ChannelFailure`, `GlobalRequest`, `RequestSuccess`,
    `RequestFailure`, `Disconnect`, `Ignore`, `Unimplemented`, and `Debug`.
+7. Message types in KEX method-specific range (30-49) and auth method-specific
+   range (60-79) are context-dependent. Phase 2 wire structs in these ranges
+   MUST keep method-specific payload bytes opaque.
+8. `KexDhInit` and `KexDhReply` are Phase 2 wire-layer names for message types
+   30 and 31. Their method-specific interpretation is deferred to higher-layer
+   crates in Phases 3-5.
 
 Transport requirements:
 
@@ -375,9 +383,13 @@ At minimum, the following mappings are REQUIRED:
 | `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
 | `Crypto` | `SSH_DISCONNECT_MAC_ERROR` (5) |
 | `ServiceNotAvailable` (or equivalent service-gate failure class) | `SSH_DISCONNECT_SERVICE_NOT_AVAILABLE` (7) |
+| `VersionMismatch` | `SSH_DISCONNECT_PROTOCOL_VERSION_NOT_SUPPORTED` (8) |
 | `HostKeyVerification` | `SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE` (9) |
+| `ConnectionLost` | `SSH_DISCONNECT_CONNECTION_LOST` (10) |
 | `Timeout` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
 | `Cancelled` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
+| `TooManyConnections` | `SSH_DISCONNECT_TOO_MANY_CONNECTIONS` (12) |
+| `AuthCancelled` | `SSH_DISCONNECT_AUTH_CANCELLED_BY_USER` (13) |
 | `AuthFailed` | `SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE` (14) |
 
 Additional variants MAY exist, but MUST still map deterministically and be
@@ -610,10 +622,12 @@ zero-copy wrappers):
 
 ```rust
 pub fn read_u32(input: &mut &[u8]) -> Result<u32, ParseError>;
+pub fn read_bool(input: &mut &[u8]) -> Result<bool, ParseError>;
 pub fn read_string(input: &mut &[u8]) -> Result<&[u8], ParseError>;
 pub fn read_name_list(input: &mut &[u8]) -> Result<Vec<&[u8]>, ParseError>;
 pub fn read_mpint(input: &mut &[u8]) -> Result<Vec<u8>, ParseError>;
 pub fn write_u32(out: &mut Vec<u8>, value: u32);
+pub fn write_bool(out: &mut Vec<u8>, value: bool);
 pub fn write_string(out: &mut Vec<u8>, value: &[u8]);
 pub fn write_name_list(out: &mut Vec<u8>, names: &[&[u8]]);
 pub fn write_mpint(out: &mut Vec<u8>, value: &[u8]);
@@ -626,6 +640,8 @@ Failure semantics:
 3. Name-list parsing MUST reject invalid separator/token encoding deterministically.
 4. Failure behavior MUST be deterministic and map to structured `ParseError`
    classes suitable for disconnect mapping in higher layers.
+5. `read_bool` MUST normalize any non-zero byte to `true`; `write_bool` MUST
+   emit only `0x00` or `0x01`.
 
 ### 26.2 `fsh-error` Minimum API and Failure Semantics
 
@@ -659,7 +675,11 @@ Required dispatch behavior:
 
 1. Message dispatch MUST route by SSH message type number to the Phase 2
    baseline message set defined in Section 11.4.
-2. Unsupported critical message classes MUST fail closed with deterministic
+2. `SSH_MSG_EXT_INFO` (type 7) MUST be parseable at wire layer. Phase 2 keeps
+   extension key/value payloads opaque.
+3. Context-dependent ranges (30-49 and 60-79) MUST preserve method-specific
+   payload bytes without semantic interpretation.
+4. Unsupported critical message classes MUST fail closed with deterministic
    mapped disconnect behavior.
-3. Parse and serialize behavior MUST remain bounded and panic-free.
-4. Wire APIs MUST remain pure and MUST NOT perform network I/O.
+5. Parse and serialize behavior MUST remain bounded and panic-free.
+6. Wire APIs MUST remain pure and MUST NOT perform network I/O.
