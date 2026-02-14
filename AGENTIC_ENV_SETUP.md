@@ -271,6 +271,16 @@ cd /home/ubuntu/mcp_agent_mail
    - `NTM_RECOVERY_ENABLED=false`
    - `NTM_RECOVERY_AUTO_INJECT=false`
 
+8. Gemini CLI auto-update loop
+   gemini-cli при запуску через bun перевіряє оновлення, але auto-updater захардкоджений на `npm`.
+   Результат: оновлює через npm в інший global dir, а `$PATH` далі резолвить стару bun-версію → нескінченний loop.
+   Відомі баги: [#13807](https://github.com/google-gemini/gemini-cli/issues/13807), [#15632](https://github.com/google-gemini/gemini-cli/issues/15632).
+   **Фікс:** auto-update вимкнено через `~/.gemini/settings.json`:
+   ```json
+   { "general": { "enableAutoUpdateNotification": false } }
+   ```
+   Оновлення тільки через `acfs update --agents-only` (використовує `bun install -g`).
+
 ---
 
 ## 8. Поточний baseline версій (практично важливі)
@@ -283,6 +293,7 @@ cd /home/ubuntu/mcp_agent_mail
 - `rch`: `1.0.8`
 - `dcg`: `0.4.0`
 - `br` (`beads_rust`): `0.1.13`
+- `gemini-cli`: `0.28.2` (auto-update вимкнено, оновлення через `acfs update`)
 
 ---
 
@@ -326,6 +337,6 @@ cd /home/ubuntu/mcp_agent_mail
 - `cass status` → Healthy, last indexed 4 minutes ago, `Conversations: 447`, `Messages: 18226`
 - `cm context "wire parsing" --json` → success, структурований JSON зі snippet-ами
 - `ms doctor` (CLI) може повернути `LockBusy`, якщо активний `ms mcp serve` тримає Tantivy lock; у такому випадку перевіряти health через MCP server (`meta-skill`)
-- `ubs --only=rust /data/projects/frankenssh --ci` → `Critical: 0`, `Warning: 4`, `Info: 14` (на поточному коді є `unwrap/try_into().unwrap()` сигнали)
+- `ubs --only=rust /data/projects/frankenssh --ci` → `Critical: 0`, `Warning: 0`, `Info: 14` (warnings закрито: `unwrap`/`try_into().unwrap()` замінено на `?`-propagation)
 - `br ready --json` (у CWD `/data/projects/frankenssh`) → 5 ready items, включно з `fsh-690` у `in_progress`
 - `codex exec "Reply with exactly: MCP-OK"` → `mcp startup: ready: meta-skill, mcp-agent-mail`, відповідь `MCP-OK`, без `MCP startup incomplete`
