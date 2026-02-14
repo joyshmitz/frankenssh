@@ -476,7 +476,7 @@ These RFCs define the normative protocol behavior:
 
 | # | Crate | Role | Key Dependencies | Primary Phase |
 |---|-------|------|-----------------|--------------|
-| 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`; binary read/write helpers (`read_u32`, `read_string`, `write_mpint`); SSH constants | `serde`, `thiserror` | 2 |
+| 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`, `DisconnectReason`; binary read/write helpers (`read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_string`, `write_mpint`, `write_name_list`); SSH constants | `serde`, `thiserror` | 2 |
 | 2 | `fsh-error` | `FshError` enum with SSH disconnect reason code mapping; `Result<T>` alias | `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parsing/serialization (no I/O): `SshPacket`, `MessageType` dispatch, all SSH message structs; padding; `WirePacket` trait | `fsh-types`, `fsh-error`, `serde` | 2 |
 | 4 | `fsh-crypto` | Cipher suite abstraction: `CipherSuite` trait, `chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes256-ctr`+`hmac-sha2-256`; key derivation (`kdf_hash`); host key types (Ed25519, RSA-SHA2, ECDSA); hybrid PQ KEX (ML-KEM-768 + X25519 planned) | `fsh-types`, `fsh-error`, `ring`, `chacha20poly1305`, `aes-gcm`, `x25519-dalek`, `ed25519-dalek`, `sha2` | 3 |
@@ -970,7 +970,7 @@ parsing/serialization with round-trip fidelity.
 
 | Crate | Key Items |
 |-------|-----------|
-| `fsh-types` | `SessionId(u64)`, `ChannelId(u32)`, `SeqNum(u32)`, `WindowSize(u32)`, `MessageType(u8)`, `DisconnectReason(u32)`, `SftpStatus(u32)`, `KeyType`; binary helpers (`read_u32`, `read_string`, `read_mpint`, `write_u32`, `write_string`, `write_mpint`, `write_name_list`) |
+| `fsh-types` | `SessionId(u64)`, `ChannelId(u32)`, `SeqNum(u32)`, `WindowSize(u32)`, `MessageType(u8)`, `DisconnectReason(u32)`; binary helpers (`read_u32`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_string`, `write_mpint`, `write_name_list`) |
 | `fsh-error` | `FshError` enum (17 variants), `ParseError` enum, `Result<T>` alias, SSH disconnect reason mapping |
 | `fsh-wire` | All SSH message types as Rust structs implementing `WirePacket`: `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ServiceRequest`, `ServiceAccept`, `UserAuthRequest`, `UserAuthSuccess`, `UserAuthFailure`, `UserAuthBanner`, `ChannelOpen`, `ChannelOpenConfirmation`, `ChannelOpenFailure`, `ChannelData`, `ChannelExtendedData`, `ChannelWindowAdjust`, `ChannelEof`, `ChannelClose`, `ChannelRequest`, `ChannelSuccess`, `ChannelFailure`, `GlobalRequest`, `RequestSuccess`, `RequestFailure`, `Disconnect`, `Ignore`, `Unimplemented`, `Debug` |
 

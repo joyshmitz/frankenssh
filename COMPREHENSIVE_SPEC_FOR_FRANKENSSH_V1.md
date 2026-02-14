@@ -226,14 +226,19 @@ Sections 11.2-11.4 are satisfied together.
 
 1. `fsh-types` MUST define foundational protocol newtypes:
    `SessionId`, `ChannelId`, `SeqNum`, `WindowSize`, `MessageType`,
-   `DisconnectReason`, `SftpStatus`, and `KeyType`.
+   and `DisconnectReason`.
 2. `fsh-types` MUST provide binary helpers for SSH network-byte-order parsing
-   and serialization: `read_u32`, `read_string`, `read_mpint`, `write_u32`,
-   `write_string`, `write_mpint`, and `write_name_list`.
+   and serialization: `read_u32`, `read_string`, `read_name_list`,
+   `read_mpint`, `write_u32`, `write_string`, `write_mpint`, and
+   `write_name_list`.
 3. Parsing helpers MUST be panic-free on malformed/truncated input and MUST
    return structured parse errors.
 4. Helpers that consume untrusted lengths MUST perform checked bounds validation
    before allocation.
+5. SFTP-specific status typing MUST NOT be a Phase 2 `fsh-types` dependency and
+   MUST be introduced with `fsh-sftp` scope.
+6. Crypto key-family enums are not required for Phase 2 wire parsing; algorithm
+   name-lists MUST be handled as opaque strings at this phase.
 
 ### 11.3 `fsh-error` Contract
 
@@ -368,6 +373,7 @@ At minimum, the following mappings are REQUIRED:
 | `Protocol` | `SSH_DISCONNECT_PROTOCOL_ERROR` (2) |
 | `KexFailed` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
 | `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
+| `ServiceNotAvailable` (or equivalent service-gate failure class) | `SSH_DISCONNECT_SERVICE_NOT_AVAILABLE` (7) |
 | `Crypto` | `SSH_DISCONNECT_MAC_ERROR` (5) |
 | `HostKeyVerification` | `SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE` (9) |
 | `Timeout` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
@@ -490,30 +496,35 @@ Exit criteria:
 2. doc cross-links consistent
 3. drift audit checklist executable
 
-### M1 - Types/Wire/Crypto Core
+### M1 - Types/Wire Baseline (Phase 2)
 
 Exit criteria:
 
 1. Sections 11.2-11.4 Phase 2 baseline implemented with evidence
    (round-trip/property/fuzz/OpenSSH fixture parsing)
-2. baseline cipher/KEX/host-key primitives integrated
-3. RFC vector evidence published
 
-### M2 - First End-to-End SSH Session
+### M2 - Crypto Primitive Baseline (Phase 3)
+
+Exit criteria:
+
+1. baseline cipher/KEX/host-key primitives integrated
+2. RFC vector evidence published
+
+### M3 - First End-to-End SSH Session
 
 Exit criteria:
 
 1. handshake + auth + session channel succeed against OpenSSH in strict mode
 2. disconnect/error mapping validated for key negative cases
 
-### M3 - Subsystem Expansion
+### M4 - Subsystem Expansion
 
 Exit criteria:
 
 1. SFTP core operations pass conformance matrix
 2. forwarding and agent minimum scopes pass harness
 
-### M4 - Hardening and Performance
+### M5 - Hardening and Performance
 
 Exit criteria:
 
