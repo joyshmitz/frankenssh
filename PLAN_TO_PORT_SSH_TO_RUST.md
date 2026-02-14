@@ -57,7 +57,27 @@ ls -1 .github/workflows/*.yml
 
 # Compatibility exception ledger presence.
 test -f COMPATIBILITY_EXCEPTIONS.md || echo "missing COMPATIBILITY_EXCEPTIONS.md"
+
+# Beads health checks (safe before bootstrap).
+test -d .beads && br doctor --json || echo "beads workspace not initialized"
+test -d .beads && br dep cycles --json || true
 ```
+
+### 0.1.2 Beads Planning Substrate (Blocker Before Deep Implementation)
+
+Execution quality depends on backlog quality. Before substantial coding, the
+Beads graph MUST be initialized and reviewable.
+
+- [ ] Initialize Beads with explicit project prefix (`br init --prefix fsh`)
+- [ ] Seed only the near-term execution kernel (no bulk backlog dump): target 10-16 issues, 3-4 epics, dependency depth <= 3
+- [ ] Keep seed graph acyclic (`br dep cycles --json` returns empty cycle set)
+- [ ] Require each implementation bead to include:
+  - unit-test commands and expected outcomes
+  - e2e script path(s) and command lines
+  - structured logging contract (`trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`, `latency_ns`, `artifact_refs`)
+  - evidence artifact location(s) (repo path and/or CI artifact URL)
+- [ ] Map every seed bead to at least one `PLAN` phase item and one `FEATURE_PARITY` row
+- [ ] Use `br` as the only mutation interface for issue state/dependencies (no manual JSONL edits)
 
 ### 0.2 Bootstrap
 
@@ -128,6 +148,10 @@ The Phase 2 completion PR MUST include or link all of:
    parsing.
 5. Deterministic replay artifacts are Phase 8 scope and MUST NOT be used as a
    Phase 2 completion requirement.
+6. Bead-closure evidence index mapping each closed Phase 2 bead to:
+   - unit-test command/output reference
+   - e2e script command/output reference
+   - structured log artifact reference
 
 ### 0.3.3 Phase 2 Evidence Artifact Format (Review-Ready)
 
@@ -141,6 +165,7 @@ Phase 2 evidence MUST be submitted in a deterministic review format.
    - `types-invariants.md` (`fsh-types` newtypes/helpers + invariant checks)
    - `error-mapping.md` (`FshError`/`ParseError` mapping to disconnect reasons)
    - `wire-coverage.md` (Phase 2 message baseline coverage table)
+   - `bead-evidence-index.md` (closed-bead -> tests/e2e/log evidence mapping)
    - `roundtrip-summary.txt` (message-by-message byte equality summary)
    - `proptest-summary.txt` (property test counts, failures, repro seeds)
    - `fuzz-summary.txt` (target name, runtime, crashes, corpus notes)

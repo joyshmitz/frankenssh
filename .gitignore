@@ -5,7 +5,13 @@
 
 # Local agent/task tooling state
 .bv/
-.beads/
+.beads/*.db
+.beads/*.db-shm
+.beads/*.db-wal
+.beads/*.lock
+.beads/last-touched
+.beads/*.tmp
+.beads/.br_history/
 
 # Local oracle clone (not part of clean-room implementation)
 legacy_openssh_code/
