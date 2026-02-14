@@ -108,6 +108,7 @@
 - `.ntm/pids/`
 - `.ntm/logs/`
 - `.ntm/summaries/`
+- `.ntm/human_inbox/`
 - `.ntm/rate_limits.json`
 
 Додано конвенцію для персональних локальних файлів агентів/розробників:

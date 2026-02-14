@@ -15,6 +15,7 @@
 .ntm/pids/
 .ntm/logs/
 .ntm/summaries/
+.ntm/human_inbox/
 .ntm/rate_limits.json
 
 # Per-agent / per-developer local scratch space (never commit)
