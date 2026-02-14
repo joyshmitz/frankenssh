@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 concurrency:
   group: advisory-security-${{ github.event_name }}-${{ github.ref }}
