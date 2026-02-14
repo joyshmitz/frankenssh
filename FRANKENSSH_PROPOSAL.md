@@ -477,7 +477,7 @@ These RFCs define the normative protocol behavior:
 | # | Crate | Role | Key Dependencies | Primary Phase |
 |---|-------|------|-----------------|--------------|
 | 1 | `fsh-types` | Newtypes: `SessionId`, `ChannelId`, `SeqNum`, `MessageType`, `WindowSize`, `DisconnectReason`; binary read/write helpers (`read_u32`, `read_bool`, `read_string`, `read_name_list`, `read_mpint`, `write_u32`, `write_bool`, `write_string`, `write_mpint`, `write_name_list`); SSH constants | `serde`, `thiserror` | 2 |
-| 2 | `fsh-error` | `FshError` enum with SSH disconnect reason code mapping; `Result<T>` alias | `thiserror` | 2 |
+| 2 | `fsh-error` | `FshError` enum with SSH disconnect reason code mapping; `ParseError` re-export surface; `Result<T>` alias | `fsh-types`, `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parsing/serialization (no I/O): `SshPacket`, `MessageType` dispatch, all SSH message structs; padding; `WirePacket` trait | `fsh-types`, `fsh-error`, `serde` | 2 |
 | 4 | `fsh-crypto` | Cipher suite abstraction: `CipherSuite` trait, `chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes256-ctr`+`hmac-sha2-256`; key derivation (`kdf_hash`); host key types (Ed25519, RSA-SHA2, ECDSA); hybrid PQ KEX (ML-KEM-768 + X25519 planned) | `fsh-types`, `fsh-error`, `ring`, `chacha20poly1305`, `aes-gcm`, `x25519-dalek`, `ed25519-dalek`, `sha2` | 3 |
 | 5 | `fsh-transport` | SSH transport layer: version exchange, algorithm negotiation, key exchange orchestration, `Transport<S>` type-state machine, rekey, sequence number management, `EncryptedTransport` (encrypt/decrypt/MAC per-packet) | `fsh-types`, `fsh-error`, `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 4 |

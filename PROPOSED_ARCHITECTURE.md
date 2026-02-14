@@ -11,7 +11,7 @@
 | # | Crate | Role | Key Dependencies | Phase |
 |---|-------|------|-----------------|-------|
 | 1 | `fsh-types` | Newtypes, binary helpers, SSH constants | `serde`, `thiserror` | 2 |
-| 2 | `fsh-error` | `FshError` enum, disconnect reason mapping | `thiserror` | 2 |
+| 2 | `fsh-error` | `FshError` enum, disconnect reason mapping, `ParseError` re-export surface | `fsh-types`, `thiserror` | 2 |
 | 3 | `fsh-wire` | Pure packet parse/serialize (no I/O) | `fsh-types`, `fsh-error` | 2 |
 | 4 | `fsh-crypto` | Cipher suites, KEX, host keys, PQ hybrid | `fsh-types`, `fsh-error`, `ring`, crypto crates | 3 |
 | 5 | `fsh-transport` | Type-state machine, encrypted I/O, rekey | `fsh-wire`, `fsh-crypto`, `asupersync` (planned) | 4 |

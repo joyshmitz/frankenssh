@@ -12,6 +12,7 @@ Purpose: one-pass review checklist for the Phase 2 normative docs package.
 ## 2. API Contract Completeness
 
 - [ ] Phase 2 entry contract remains canonical in spec sections 11.2-11.4 (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:227`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:245`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:257`)
+- [ ] `ParseError` provenance is consistent across docs (`fsh-types` authors; `fsh-error` re-exports surface) (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:247`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:676`, `PROPOSED_ARCHITECTURE.md:14`, `PLAN_TO_PORT_SSH_TO_RUST.md:122`, `FRANKENSSH_PROPOSAL.md:480`)
 - [ ] `ExtInfo` (SSH_MSG_EXT_INFO type 7) is in Phase 2 baseline and dispatch requirements (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:267`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:703`, `FRANKENSSH_PROPOSAL.md:984`)
 - [ ] Disconnect mapping includes required service-gate code 7 plus version/connection/rate/auth-cancel cases (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:385`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:386`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:388`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:391`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:392`)
 - [ ] New Appendix defines minimum API shapes for `fsh-types`/`fsh-error`/`fsh-wire` (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:627`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:632`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:671`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:687`)
@@ -19,8 +20,8 @@ Purpose: one-pass review checklist for the Phase 2 normative docs package.
 ## 3. Evidence and Milestone Gates
 
 - [ ] PLAN Phase 2 checklist and acceptance tests are aligned (`PLAN_TO_PORT_SSH_TO_RUST.md:90`, `PLAN_TO_PORT_SSH_TO_RUST.md:102`)
-- [ ] Exit evidence package is explicit and reviewable (`PLAN_TO_PORT_SSH_TO_RUST.md:142`)
-- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:160`)
+- [ ] Exit evidence package is explicit and reviewable (`PLAN_TO_PORT_SSH_TO_RUST.md:144`)
+- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:162`)
 - [ ] Milestones cleanly separate Phase 2 baseline from Phase 3 crypto (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:533`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:540`)
 - [ ] Strict-mode rekey defaults are explicit and OpenSSH-aligned (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:106`)
 

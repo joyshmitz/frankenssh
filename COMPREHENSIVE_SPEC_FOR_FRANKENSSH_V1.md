@@ -244,8 +244,8 @@ Sections 11.2-11.4 are satisfied together.
 
 ### 11.3 `fsh-error` Contract
 
-1. `fsh-error` MUST define `FshError`, `ParseError`, and a workspace-standard
-   `Result<T>` alias.
+1. `fsh-error` MUST define `FshError`, re-export `ParseError` from `fsh-types`,
+   and provide a workspace-standard `Result<T>` alias.
 2. Externally observable error paths MUST map deterministically to SSH
    disconnect reason codes (RFC 4253 §11.1).
 3. A single documented fallback mapping for otherwise-unclassified internal
@@ -261,7 +261,7 @@ Sections 11.2-11.4 are satisfied together.
 3. Hot-path operations SHOULD avoid avoidable allocations.
 4. Length fields MUST be validated before allocation.
 5. Message type dispatch MUST reject unsupported critical message classes with
-   mapped disconnect reasons.
+   deterministic `ParseError` classes for higher-layer disconnect mapping per Section 15.
 6. The Phase 2 message baseline MUST include wire structs implementing
    parse/serialize/message-type behavior for:
    `KexInit`, `KexDhInit`, `KexDhReply`, `NewKeys`, `ExtInfo`, `ServiceRequest`,
@@ -673,7 +673,7 @@ Failure semantics:
 Required classes:
 
 1. `FshError` (cross-layer operational/protocol error envelope)
-2. `ParseError` (wire/helper parsing failures)
+2. `ParseError` (re-exported from `fsh-types`; wire/helper parsing failures)
 3. `Result<T>` alias bound to the project error envelope
 
 Required behavior:
@@ -705,6 +705,6 @@ Required dispatch behavior:
 3. Context-dependent ranges (30-49 and 60-79) MUST preserve method-specific
    payload bytes without semantic interpretation.
 4. Unsupported critical message classes MUST fail closed with deterministic
-   mapped disconnect behavior.
+   `ParseError` classes suitable for higher-layer disconnect mapping per Section 15.
 5. Parse and serialize behavior MUST remain bounded and panic-free.
 6. Wire APIs MUST remain pure and MUST NOT perform network I/O.
