@@ -1,0 +1,5 @@
+target/
+legacy_openssh_code/
+artifacts/
+.beads/*.db*
+Cargo.lock

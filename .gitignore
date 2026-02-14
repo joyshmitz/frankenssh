@@ -12,6 +12,14 @@
 .beads/last-touched
 .beads/*.tmp
 .beads/.br_history/
+.ntm/pids/
+.ntm/logs/
+.ntm/summaries/
+.ntm/rate_limits.json
+
+# Per-agent / per-developer local scratch space (never commit)
+.local/
+.agent-work/
 
 # Local oracle clone (not part of clean-room implementation)
 legacy_openssh_code/
