@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# FrankenSSH CI gate runner — run all mandatory checks
+# FrankenSSH core CI gate runner — run always-required checks.
+# Conformance/bench/advisory security gates are scope-triggered and run separately.
 # Usage: ./scripts/gates.sh
 
 echo "=== FrankenSSH CI Gates ==="

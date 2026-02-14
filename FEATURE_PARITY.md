@@ -9,6 +9,12 @@
 - parity_green
 - parity_gap
 
+Scope note:
+
+- SFTP v3 is parity-gated for V1.
+- SFTP v6 is optional extension scope and is not counted in the 58 tracked
+  capabilities unless explicitly added to this matrix.
+
 ## 1. Coverage Summary (Current)
 
 | Domain | Implemented | Total Tracked | Coverage |

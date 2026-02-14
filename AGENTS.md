@@ -86,7 +86,7 @@ Every meaningful implementation decision must apply all four methods:
    - One optimization lever per change
    - Behavior-isomorphism proof: conformance harness must pass identically before and after
 3. **RaptorQ-everywhere durability:**
-   - Durable trust artifacts (host key databases, known_hosts state, session resumption token stores, conformance/benchmark evidence bundles) carry repair-symbol sidecars
+   - Durable artifacts (host key databases, known_hosts state, session resumption token stores, serialized configurations, conformance/benchmark evidence bundles, migration/reproducibility ledgers) carry repair-symbol sidecars
    - Decode proofs for any recovery or resumption path
    - Background integrity verification for persistent credential stores
 4. **frankenlibc/frankenfs security-compatibility doctrine:**
@@ -211,7 +211,7 @@ SSH operates in an adversarial network. Every byte from the peer is potentially 
 
 ## RaptorQ-Everywhere Contract
 
-For any durable artifact that FrankenSSH manages (host key databases, known_hosts state, persistent session resumption tokens, serialized configurations, conformance/benchmark evidence bundles):
+For any durable artifact that FrankenSSH manages (host key databases, known_hosts state, persistent session resumption tokens, serialized configurations, conformance/benchmark evidence bundles, migration/reproducibility ledgers):
 
 1. **Repair-symbol sidecars** — fountain-coded redundancy alongside the primary artifact.
 2. **Decode proofs** — verifiable recovery path for any restoration operation.

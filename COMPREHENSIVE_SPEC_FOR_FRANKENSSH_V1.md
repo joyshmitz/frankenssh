@@ -46,7 +46,8 @@ V1 scope includes:
 2. Authentication: publickey, password, keyboard-interactive, certificates
 3. Channels: session, direct-tcpip, forwarded-tcpip, auth-agent
 4. Session operations: PTY, shell, exec, env, signals, exit status
-5. SFTP v3 core operations
+5. SFTP v3 core operations (required), with SFTP v6 as optional/non-parity-gating
+   extension scope
 6. SSH agent protocol basics
 7. Server and client binaries
 8. Differential conformance harness against real OpenSSH
@@ -58,6 +59,8 @@ Out of scope for V1 unless explicitly added to this document:
 3. Legacy weak ciphers and DSA keys
 4. GSSAPI/Kerberos
 5. OpenSSH UX extras (ProxyJump, ControlMaster) beyond core protocol behavior
+6. SFTP v6 parity-gating requirements unless explicitly added to
+   `FEATURE_PARITY.md`
 
 ## 4. Architecture Blueprint
 
@@ -111,6 +114,7 @@ Hardened mode MUST prioritize security with bounded compatibility tradeoffs:
 2. Rekey policy MUST be aggressive (target: 1 GiB or 1 hour).
 3. Algorithm set MUST be modern-only and MAY enforce PQ hybrid KEX policy.
 4. Defensive parser limits MUST be stricter than strict mode defaults.
+5. Host-key/auth policy MUST be Ed25519 + certificate flows only.
 
 ### 5.3 Mode Invariants
 
@@ -189,7 +193,7 @@ Canonical high-level sequence:
 3. KEXINIT exchanged
 4. KEX completed
 5. NEWKEYS applied
-6. Service request (ssh-userauth)
+6. Service request and accept (`ssh-userauth`)
 7. Authentication success
 8. Channel operations
 9. Graceful close or disconnect
@@ -200,12 +204,16 @@ Illegal transitions MUST be unrepresentable in type-state APIs.
 
 | From | Event | To | Required behavior |
 |---|---|---|---|
-| `PreVersion` | peer version received | `VersionExchanged` | validate format, enforce limits |
-| `VersionExchanged` | KEXINIT exchange | `KexNegotiating` | deterministic algorithm selection |
-| `KexNegotiating` | KEX success + NEWKEYS | `EncryptedUnauthenticated` | apply keys atomically |
-| `EncryptedUnauthenticated` | auth success | `Authenticated` | unlock channel APIs |
-| `Authenticated` | channel open | `ChannelActive` | enforce window and id invariants |
-| any encrypted state | rekey trigger | `Rekeying` | preserve channel safety invariants |
+| `Connected` | peer version received and validated | `VersionExchanged` | validate format, enforce limits |
+| `VersionExchanged` | KEXINIT exchange | `KexInitExchanged` | deterministic algorithm selection path |
+| `KexInitExchanged` | algorithms selected and KEX entered | `KexRunning` | enforce negotiation and policy filters |
+| `KexRunning` | KEX success + NEWKEYS (both directions) | `Encrypted` | apply keys atomically |
+| `Encrypted` | `SSH_MSG_SERVICE_REQUEST` + `SSH_MSG_SERVICE_ACCEPT` for `ssh-userauth` | `Authenticating` | enforce RFC 4253 §10 service gate |
+| `Authenticating` | `SSH_MSG_USERAUTH_SUCCESS` | `Authenticated` | unlock channel APIs |
+| `Authenticated` | first channel open/confirm | `Ready` | enforce window and id invariants |
+| `Ready` | disconnect path initiated | `Closing` | preserve ordering and reason-code contract |
+| `Closing` | transport teardown | `Disconnected` | terminal state |
+| any post-`Encrypted` state | rekey trigger | same logical state after rekey | preserve channel and sequencing invariants |
 
 ## 11. Wire and Transport Contract
 
@@ -221,17 +229,32 @@ Transport requirements:
 
 1. Sequence numbers MUST be monotonic modulo SSH limits.
 2. Rekey triggers MUST be configurable by byte and time thresholds.
-3. Strict KEX behavior MUST match scoped OpenSSH expectations in strict mode.
+3. Strict KEX behavior MUST match scoped OpenSSH expectations in strict mode,
+   including OpenSSH pseudo-algorithm negotiation (`kex-strict-c-v00@openssh.com`,
+   `kex-strict-s-v00@openssh.com`) and MUST NOT conflate strict-KEX with RFC 8308
+   ext-info negotiation.
 
 ## 12. Algorithm and Negotiation Contract
 
-Required classical baseline:
+Required KEX baseline:
 
-1. `curve25519-sha256` KEX
-2. `chacha20-poly1305@openssh.com`
-3. `aes256-gcm@openssh.com`
-4. `aes256-ctr` + `hmac-sha2-256`
-5. host keys: Ed25519, RSA-SHA2, ECDSA
+1. `curve25519-sha256`
+2. `ecdh-sha2-nistp256`
+3. `sntrup761x25519-sha512`
+4. `diffie-hellman-group16-sha512`
+5. `diffie-hellman-group18-sha512`
+
+Required cipher baseline:
+
+1. `chacha20-poly1305@openssh.com`
+2. `aes256-gcm@openssh.com`
+3. `aes256-ctr` + `hmac-sha2-256`
+
+Required host-key baseline:
+
+1. `ssh-ed25519`
+2. `rsa-sha2-256/512`
+3. `ecdsa-sha2-nistp256`
 
 PQ hybrid policy:
 
@@ -279,6 +302,8 @@ SFTP rules:
 1. V3 init/version negotiation is REQUIRED.
 2. Request/response correlation MUST be exact.
 3. Core file ops in `FEATURE_PARITY.md` are REQUIRED for V1 parity.
+4. SFTP v6 MAY be implemented as optional extension scope, but is non-parity-
+   gating unless explicitly tracked in `FEATURE_PARITY.md`.
 
 Forwarding rules:
 
@@ -298,7 +323,8 @@ Disconnect behavior MUST specify:
 
 1. code
 2. human-readable reason string (without secrets)
-3. language tag behavior
+3. language tag behavior (strict mode MUST use empty string for OpenSSH
+   compatibility unless an explicit compatibility exception is documented)
 4. sequence timing relative to channel/transport shutdown
 
 ## 16. RaptorQ-Everywhere Durability Contract
@@ -309,8 +335,9 @@ Durable artifact classes:
 
 1. `known_hosts` and host-key trust databases
 2. persistent session resumption token stores
-3. conformance artifacts and benchmark evidence bundles
-4. migration/reproducibility ledgers tied to compatibility decisions
+3. serialized configurations
+4. conformance artifacts and benchmark evidence bundles
+5. migration/reproducibility ledgers tied to compatibility decisions
 
 Required outputs per artifact class:
 
@@ -369,15 +396,26 @@ environment identifiers.
 
 ## 19. CI Gate Topology (Release-Critical)
 
-Required gate commands:
+Core required gate commands:
 
 ```bash
 cargo fmt --check
 cargo check --all-targets
 cargo clippy --all-targets -- -D warnings
 cargo test --workspace
+```
+
+Additional required gates for conformance/performance scope:
+
+```bash
 cargo test -p fsh-harness -- --nocapture
 cargo bench -p fsh-harness
+```
+
+Advisory security gate (non-blocking unless policy escalates):
+
+```bash
+cargo audit
 ```
 
 The CI workflow definition in `.github/workflows` is currently pending and MUST
