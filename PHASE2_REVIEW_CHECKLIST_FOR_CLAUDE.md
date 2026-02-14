@@ -4,10 +4,10 @@ Purpose: one-pass review checklist for the Phase 2 normative docs package.
 
 ## 1. Phase Boundary Hygiene
 
-- [ ] `fsh-types` Phase 2 scope excludes SFTP-specific typing and crypto-key enums (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:240`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:242`, `PLAN_TO_PORT_SSH_TO_RUST.md:107`, `PLAN_TO_PORT_SSH_TO_RUST.md:109`)
-- [ ] Phase 2 helper list includes read/write name-list and bool helpers (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:233`, `PLAN_TO_PORT_SSH_TO_RUST.md:91`, `FRANKENSSH_PROPOSAL.md:982`)
+- [ ] `fsh-types` Phase 2 scope excludes SFTP-specific typing and crypto-key enums (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:240`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:242`, `PLAN_TO_PORT_SSH_TO_RUST.md:109`, `PLAN_TO_PORT_SSH_TO_RUST.md:111`)
+- [ ] Phase 2 helper list includes read/write name-list and bool helpers (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:233`, `PLAN_TO_PORT_SSH_TO_RUST.md:93`, `FRANKENSSH_PROPOSAL.md:982`)
 - [ ] Proposal architecture table matches Phase 2 baseline (`FRANKENSSH_PROPOSAL.md:479`)
-- [ ] Context-dependent type strategy (30-49, 60-79) is explicit in spec+plan+proposal (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:274`, `PLAN_TO_PORT_SSH_TO_RUST.md:94`, `FRANKENSSH_PROPOSAL.md:992`)
+- [ ] Context-dependent type strategy (30-49, 60-79) is explicit in spec+plan+proposal (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:274`, `PLAN_TO_PORT_SSH_TO_RUST.md:96`, `FRANKENSSH_PROPOSAL.md:992`)
 
 ## 2. API Contract Completeness
 
@@ -18,9 +18,9 @@ Purpose: one-pass review checklist for the Phase 2 normative docs package.
 
 ## 3. Evidence and Milestone Gates
 
-- [ ] PLAN Phase 2 checklist and acceptance tests are aligned (`PLAN_TO_PORT_SSH_TO_RUST.md:88`, `PLAN_TO_PORT_SSH_TO_RUST.md:100`)
-- [ ] Exit evidence package is explicit and reviewable (`PLAN_TO_PORT_SSH_TO_RUST.md:140`)
-- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:158`)
+- [ ] PLAN Phase 2 checklist and acceptance tests are aligned (`PLAN_TO_PORT_SSH_TO_RUST.md:90`, `PLAN_TO_PORT_SSH_TO_RUST.md:102`)
+- [ ] Exit evidence package is explicit and reviewable (`PLAN_TO_PORT_SSH_TO_RUST.md:142`)
+- [ ] New deterministic artifact format is present (`PLAN_TO_PORT_SSH_TO_RUST.md:160`)
 - [ ] Milestones cleanly separate Phase 2 baseline from Phase 3 crypto (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:533`, `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:540`)
 - [ ] Strict-mode rekey defaults are explicit and OpenSSH-aligned (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:106`)
 

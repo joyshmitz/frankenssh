@@ -39,9 +39,11 @@ initialized.
   closing implementation beads.
 - Keep planning-first discipline: validate dependency graph and acceptance
   criteria before implementation.
-- Every implementation bead must define unit tests, e2e script commands, and
-  structured logging requirements with evidence artifact locations (or explicit
-  `N/A` + justification for pure-function beads).
+- Every implementation bead must define unit tests, e2e script commands (or
+  explicit `N/A` + justification for pure-function beads with no runtime
+  integration surface), and structured logging requirements with evidence
+  artifact locations (or explicit `N/A` + justification for pure-function
+  beads).
 - `br sync --flush-only` is non-invasive; persist task-state changes by staging
   `.beads/` in git explicitly.
 
