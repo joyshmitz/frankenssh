@@ -54,6 +54,9 @@ test -d legacy_openssh_code/openssh-portable || echo "missing local OpenSSH orac
 
 # Workflow presence drift.
 ls -1 .github/workflows/*.yml
+
+# Compatibility exception ledger presence.
+test -f COMPATIBILITY_EXCEPTIONS.md || echo "missing COMPATIBILITY_EXCEPTIONS.md"
 ```
 
 ### 0.2 Bootstrap
@@ -123,6 +126,8 @@ The Phase 2 completion PR MUST include or link all of:
 3. `fsh-wire` message coverage table for the Phase 2 baseline.
 4. Test evidence for round-trip, property tests, fuzzing, and OpenSSH fixture
    parsing.
+5. Deterministic replay artifacts are Phase 8 scope and MUST NOT be used as a
+   Phase 2 completion requirement.
 
 ### 0.3.3 Phase 2 Evidence Artifact Format (Review-Ready)
 
@@ -178,6 +183,7 @@ Phase 2 evidence MUST be submitted in a deterministic review format.
 - [ ] Encrypted packet I/O
 - [ ] Rekey support
 - [ ] Strict KEX extension
+- [ ] Runtime resource limits + deterministic backpressure enforcement
 
 ### 0.6 Auth & Channels (Phase 5)
 
@@ -204,6 +210,8 @@ Phase 2 evidence MUST be submitted in a deterministic review format.
 ### 0.9 Harness & API (Phase 8)
 
 - [ ] Conformance harness vs real OpenSSH
+- [ ] Deterministic replay evidence package (`session-trace.jsonl`, `oracle-diff.md`, provenance metadata)
+- [ ] Interop matrix reporting (mode x direction x auth-method x rekey scenario)
 - [ ] Public API facade (frankenssh crate)
 - [ ] Documentation and examples
 
