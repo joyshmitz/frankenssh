@@ -28,6 +28,20 @@ This project uses four pervasive disciplines:
 - Implementation not yet started (Phase 1: Bootstrap)
 - OpenSSH oracle checkout is local/gitignored and may need bootstrap on a fresh clone
 
+## Beads Planning Workflow
+
+This repo uses Beads (`br`, beads_rust) for plan-space task orchestration once
+initialized.
+
+- Use `br` as the only mutation interface for issues/dependencies (`br create`,
+  `br update`, `br close`, `br dep add/remove`).
+- Keep planning-first discipline: validate dependency graph and acceptance
+  criteria before implementation.
+- Every implementation bead must define unit tests, e2e script commands, and
+  structured logging requirements with evidence artifact locations.
+- `br sync --flush-only` is non-invasive; persist task-state changes by staging
+  `.beads/` in git explicitly.
+
 ## V1 Scope
 
 - SSH-2 wire compatibility with OpenSSH

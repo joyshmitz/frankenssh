@@ -239,6 +239,45 @@ These files are mandatory and must stay current:
 
 ---
 
+## Beads (br) Planning Contract
+
+When issue tracking is active in this repo, Beads (`br`, beads_rust) is the
+only accepted mutation surface for task state and dependencies.
+
+Rules:
+
+1. **Mutation path is `br` only**:
+   - Create/update/close issues only via `br create`, `br update`, `br close`.
+   - Add/remove dependencies only via `br dep add` / `br dep remove`.
+   - Manual edits to `.beads/issues.jsonl` are forbidden.
+2. **Prefix discipline**:
+   - Initialize with explicit project prefix (`br init --prefix fsh`) to avoid
+     mixed historical prefixes.
+3. **Plan-first before implementation**:
+   - Build/adjust the issue graph before large coding waves.
+   - Start with a bounded seed graph (small, acyclic, execution-focused), then
+     expand only when evidence demands it.
+4. **Mandatory acceptance contract for every implementation bead**:
+   - Unit-test scope and exact command set.
+   - E2E script scope and executable command set.
+   - Structured logging requirements and required fields:
+     `trace_id`, `mode`, `phase`, `crate`, `scenario`, `outcome`,
+     `latency_ns`, `artifact_refs`.
+   - Explicit evidence artifact locations (paths or CI artifact URLs).
+5. **Dependency hygiene**:
+   - Cycles are forbidden; verify with `br dep cycles --json`.
+   - Every blocking dependency must include a one-sentence justification in the
+     bead body.
+6. **Session protocol**:
+   - Start: `br ready --json`.
+   - Claim: `br update <id> --status in_progress`.
+   - Finish: `br close <id> --reason "..."`.
+   - Sync: `br sync --flush-only` (non-invasive; no auto-commit).
+   - Persist: `git add .beads/` and commit in the same change where status
+     transitions are finalized.
+
+---
+
 ## Porting Doctrine (Spec-First, Conformance-First)
 
 Follow this sequence:
