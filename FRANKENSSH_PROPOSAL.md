@@ -571,14 +571,14 @@ These RFCs define the normative protocol behavior:
 ```rust
 /// Pure parse/serialize for SSH messages. No I/O.
 pub trait WirePacket: Sized {
+    /// SSH message type number (RFC 4253 §12).
+    const MESSAGE_TYPE: u8;
+
     /// Parse from raw bytes (after decryption + MAC verification).
-    fn parse(bytes: &[u8]) -> Result<Self, ParseError>;
+    fn parse(payload: &[u8]) -> Result<Self, ParseError>;
 
     /// Serialize to bytes (before encryption + MAC).
-    fn serialize(&self, buf: &mut Vec<u8>);
-
-    /// SSH message type number (RFC 4253 §12).
-    fn message_type(&self) -> MessageType;
+    fn serialize(&self, out: &mut Vec<u8>) -> Result<(), ParseError>;
 }
 ```
 
@@ -979,8 +979,7 @@ parsing/serialization with round-trip fidelity.
 - SSH is big-endian (network byte order) — opposite of ext4.
 - `read_string` returns `&[u8]` with length prefix (u32 length + data).
 - `read_mpint` handles SSH multi-precision integers (sign-extended, big-endian).
-- All message types have `message_type()` returning the RFC-defined message
-  number.
+- All message types define `MESSAGE_TYPE` with the RFC-defined message number.
 
 **Acceptance Criteria:**
 - Parse and re-serialize every SSH message type; byte-for-byte round-trip.

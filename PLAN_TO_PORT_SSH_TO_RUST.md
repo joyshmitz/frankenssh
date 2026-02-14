@@ -125,7 +125,9 @@ The Phase 2 completion PR MUST include or link all of:
 Phase 2 evidence MUST be submitted in a deterministic review format.
 
 1. Artifact root:
-   - `artifacts/phase2/<YYYY-MM-DD>/<short-sha>/`
+   - logical path schema: `artifacts/phase2/<YYYY-MM-DD>/<short-sha>/`
+   - note: `.gitignore` excludes `artifacts/` by default; this path is a
+     canonical layout identifier, not a requirement that files be git-tracked.
 2. Required files:
    - `types-invariants.md` (`fsh-types` newtypes/helpers + invariant checks)
    - `error-mapping.md` (`FshError`/`ParseError` mapping to disconnect reasons)
@@ -145,6 +147,13 @@ Phase 2 evidence MUST be submitted in a deterministic review format.
 5. Traceability:
    - each readiness artifact MUST state the mapped
      `FEATURE_PARITY.md` row(s) and `PLAN` Section `0.3.1` item(s) it satisfies.
+6. Publication modes (MUST choose at least one per completion PR):
+   - CI artifact publication with stable job URL(s) pointing to files laid out
+     under the canonical logical path schema.
+   - External immutable artifact store URL(s) with checksum references included
+     in the PR description.
+   - Git-tracked snapshot under `artifacts/phase2/...` only when explicitly
+     needed for audit/reproducibility; if used, include via `git add -f`.
 
 ### 0.4 Crypto (Phase 3)
 
