@@ -620,9 +620,9 @@ If implementation and spec diverge, implementation is considered out-of-spec
 until either:
 
 1. implementation is corrected, or
-2. this document is updated with explicit rationale and acceptance evidence.
-3. any approved compatibility deviation is recorded in
-   `COMPATIBILITY_EXCEPTIONS.md` with scope, rationale, and evidence links.
+2. this document is updated with explicit rationale and acceptance evidence,
+   AND the approved deviation is recorded in `COMPATIBILITY_EXCEPTIONS.md`
+   with scope, rationale, and evidence links.
 
 ## 26. Phase 2 API Contract Appendix (Normative)
 
