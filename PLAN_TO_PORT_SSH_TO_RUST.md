@@ -154,7 +154,9 @@ Durable artifact scope for FrankenSSH:
 
 1. `known_hosts` and host-key trust databases
 2. Persistent session resumption token stores
-3. Conformance/benchmark evidence artifacts
+3. Serialized configurations
+4. Conformance/benchmark evidence artifacts
+5. Migration/reproducibility ledgers tied to compatibility decisions
 
 Required artifact envelope (when implemented):
 

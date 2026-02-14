@@ -265,10 +265,10 @@ opt-level = 3          # For benchmarking
 | Compile | `cargo check --all-targets` | Block merge |
 | Lints | `cargo clippy --all-targets -- -D warnings` | Block merge |
 | Tests | `cargo test --workspace` | Block merge |
-| Conformance | `fsh-harness` (against real OpenSSH) | Block merge |
+| Conformance | `cargo test -p fsh-harness -- --nocapture` (scope-triggered) | Block merge on conformance changes |
 | Parity | `parity_report_matches_feature_parity_md` | Block merge |
-| Security | `cargo audit` | Warn (block on critical) |
-| Benchmarks | `criterion` regression check | Warn |
+| Security | `cargo audit` | Advisory (warn only unless policy escalates) |
+| Benchmarks | `cargo bench -p fsh-harness` (scope-triggered) | Advisory |
 
 ### 4.5 Alien-Artifact Quality Bar
 
@@ -355,9 +355,12 @@ integer flags that can be checked incorrectly or forgotten entirely. Examples:
 
 ```rust
 // These types exist at compile time only — zero runtime cost
-pub struct Initial;          // TCP connected, no version exchange
+pub struct Connected;        // TCP connected, no version exchange
 pub struct VersionExchanged; // Version strings exchanged
-pub struct KexComplete;      // Key exchange done, encryption active
+pub struct KexInitExchanged; // KEXINIT exchanged, algorithms selected
+pub struct KexRunning;       // Key exchange in progress
+pub struct Encrypted;        // Key exchange complete, encryption active
+pub struct Authenticating;   // ssh-userauth service accepted, auth in progress
 pub struct Authenticated;    // User authenticated
 pub struct Ready;            // Channels can be opened
 
@@ -366,10 +369,14 @@ pub struct Session<S: ProtocolState> {
     _state: PhantomData<S>,
 }
 
-// You literally cannot call open_channel() on a Session<KexComplete>
+// You literally cannot call open_channel() on a Session<Encrypted>
 // because the method only exists on Session<Authenticated> and Session<Ready>
-impl Session<Authenticated> {
-    pub fn request_service(self, cx: &Cx) -> Result<Session<Ready>>;
+impl Session<Encrypted> {
+    pub fn request_service(self, cx: &Cx) -> Result<Session<Authenticating>>;
+}
+
+impl Session<Authenticating> {
+    pub fn authenticate(self, cx: &Cx, ...) -> Result<Session<Authenticated>>;
 }
 
 impl Session<Ready> {
@@ -757,10 +764,13 @@ ordering at the type level:
   [TCP Connected]
         |
         v
-  [VersionExchange]  ---- exchange SSH-2.0 version strings
+  [VersionExchanged]  -- exchange SSH-2.0 version strings
         |
         v
-  [KeyExchange]  --------- negotiate algorithms, perform KEX, derive keys
+  [KexInitExchanged] --- exchange KEXINIT + select algorithms
+        |
+        v
+  [KexRunning]  --------- perform KEX, derive keys, exchange NEWKEYS
         |
         v
   [Encrypted]  ----------- transport encrypted, service request possible
@@ -775,6 +785,9 @@ ordering at the type level:
   [Ready]  --------------- channels open, data flowing
         |
         v
+  [Closing]  ------------ disconnect path in progress
+        |
+        v
   [Disconnected]  -------- connection closed
 ```
 
@@ -784,10 +797,14 @@ ordering at the type level:
 // Protocol states (zero-sized types — exist only at compile time)
 pub struct Connected;
 pub struct VersionExchanged;
+pub struct KexInitExchanged;
+pub struct KexRunning;
 pub struct Encrypted;
 pub struct Authenticating;
 pub struct Authenticated;
 pub struct Ready;
+pub struct Closing;
+pub struct Disconnected;
 
 // Session is parameterized by state
 pub struct Session<S: ProtocolState> {
@@ -803,10 +820,23 @@ impl Session<Connected> {
 }
 
 impl Session<VersionExchanged> {
-    pub async fn key_exchange(self, cx: &Cx) -> Result<Session<Encrypted>>;
+    pub async fn exchange_kexinit(self, cx: &Cx) -> Result<Session<KexInitExchanged>>;
+}
+
+impl Session<KexInitExchanged> {
+    pub async fn run_kex(self, cx: &Cx) -> Result<Session<KexRunning>>;
+}
+
+impl Session<KexRunning> {
+    pub async fn install_keys(self, cx: &Cx) -> Result<Session<Encrypted>>;
 }
 
 impl Session<Encrypted> {
+    pub async fn request_userauth_service(self, cx: &Cx)
+        -> Result<Session<Authenticating>>;
+}
+
+impl Session<Authenticating> {
     pub async fn authenticate(self, cx: &Cx, auth: &dyn Authenticator)
         -> Result<Session<Authenticated>>;
 }
@@ -818,7 +848,11 @@ impl Session<Authenticated> {
 impl Session<Ready> {
     pub async fn open_channel(&self, cx: &Cx, kind: ChannelKind)
         -> Result<ChannelId>;
-    pub async fn disconnect(self, cx: &Cx) -> Result<()>;
+    pub async fn disconnect(self, cx: &Cx) -> Result<Session<Closing>>;
+}
+
+impl Session<Closing> {
+    pub async fn finalize(self, cx: &Cx) -> Result<Session<Disconnected>>;
 }
 ```
 
@@ -1019,9 +1053,9 @@ algorithm negotiation, key exchange, and encrypted packet I/O.
 | Component | Description |
 |-----------|-------------|
 | `VersionExchange` | Parse/send `SSH-2.0-FrankenSSH_0.1` version string |
-| `AlgorithmNegotiation` | `KexInit` exchange; strict KEX mode (RFC 9142 extension) |
+| `AlgorithmNegotiation` | `KexInit` exchange; strict-KEX OpenSSH extension handling (`kex-strict-c-v00@openssh.com` / `kex-strict-s-v00@openssh.com`) |
 | `KeyExchange` | Orchestrate KEX: generate ephemeral keys, exchange, derive session keys, verify host key, send `NewKeys` |
-| `Transport<S>` | Type-state session with `Connected` -> `VersionExchanged` -> `Encrypted` transitions |
+| `Transport<S>` | Type-state session with `Connected` -> `VersionExchanged` -> `KexInitExchanged` -> `KexRunning` -> `Encrypted` transitions |
 | `EncryptedTransport` | Per-packet encrypt/decrypt with sequence number management |
 | `Rekey` | Automatic rekeying after N bytes or N seconds (configurable) |
 
@@ -1043,7 +1077,7 @@ algorithm negotiation, key exchange, and encrypted packet I/O.
 |------|----------|-----------|
 | Algorithm negotiation order sensitivity | High | Follow RFC 4253 §7.1 strictly; test with restrictive algorithm configs |
 | Rekey during data transfer | High | Buffer data during rekey; test with continuous transfer + forced rekey |
-| Strict KEX interop | Medium | Test against OpenSSH 9.5+ which supports strict KEX |
+| Strict KEX interop | Medium | Test against OpenSSH 9.6+ which supports strict KEX |
 
 ---
 
@@ -1066,7 +1100,8 @@ algorithm negotiation, key exchange, and encrypted packet I/O.
 - Open 100 simultaneous channels; verify independent data streams.
 - Window management: send data exceeding window size; verify flow control
   pauses sender until `WINDOW_ADJUST` received.
-- Channel close: verify orderly close sequence (EOF -> close -> response).
+- Channel close: verify CLOSE behavior both with and without prior EOF
+  (RFC 4254 §5.3), including the common EOF -> CLOSE -> response choreography.
 
 **LOC:** ~5,000 | **Duration:** 2-3 weeks
 
@@ -1839,7 +1874,7 @@ Specific test vectors extracted from RFCs:
 | Passive eavesdropping | Encryption (ChaCha20-Poly1305 / AES-256-GCM) |
 | Active MITM | Host key verification (TOFU or certificate) |
 | Harvest now, decrypt later (quantum) | ML-KEM-768 hybrid KEX |
-| Terrapin attack (prefix truncation) | Strict KEX extension (RFC 9142) |
+| Terrapin attack (prefix truncation) | Strict-KEX OpenSSH extension (`kex-strict-c-v00@openssh.com` / `kex-strict-s-v00@openssh.com`) |
 | Brute force auth | Max auth attempts + exponential backoff |
 | DoS (connection flood) | Rate limiting + connection limits |
 | Timing side-channels | Constant-time operations for all secret-dependent code |
@@ -1954,7 +1989,7 @@ FrankenSSH approach:
 | **Type-state** | A design pattern that encodes protocol states as types, making invalid state transitions compile-time errors. |
 | **Cx** | Capability context from `asupersync`. Carries cancellation tokens, deadlines, and structured concurrency scope. |
 | **TOFU** | Trust On First Use. The default SSH host key verification model: accept key on first connection, reject changes. |
-| **Strict KEX** | SSH extension (RFC 9142) that resets sequence numbers after KEX to prevent Terrapin-style prefix truncation attacks. |
+| **Strict KEX** | OpenSSH extension (`kex-strict-c-v00@openssh.com` / `kex-strict-s-v00@openssh.com`) that hardens KEX message sequencing against Terrapin-style prefix truncation attacks. |
 | **mpint** | Multi-precision integer. SSH wire format for arbitrarily large integers (big-endian, sign-extended). |
 | **name-list** | Comma-separated list of algorithm names in SSH wire format. |
 | **FCW** | First-Committer-Wins. MVCC conflict resolution strategy. (FrankenFS term; included for cross-reference.) |
@@ -1971,7 +2006,7 @@ FrankenSSH approach:
 | RFC 8709 | Ed25519/Ed448 public keys for SSH |
 | RFC 8332 | RSA-SHA2 signatures for SSH |
 | RFC 8731 | Curve25519/448 key exchange |
-| RFC 9142 | Updated KEX algorithms + strict KEX |
+| RFC 9142 | Updated KEX algorithms |
 | NIST FIPS 203 | ML-KEM specification |
 | draft-ietf-sshm-pq-ssh | Post-quantum SSH key exchange |
 | draft-ietf-secsh-filexfer-02 | SFTP v3 specification |
