@@ -28,7 +28,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [x] Add explicit legacy-oracle bootstrap note for `legacy_openssh_code/openssh-portable` and clarify that the checkout is local/gitignored
 - [x] Remove/repair stale claims that companion docs "will be created later" when they already exist
 - [x] Author `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` and mark it as canonical where conflicts exist
-- [ ] CI workflow under `.github/workflows` (fmt/check/clippy/test)
+- [x] CI workflows under `.github/workflows` authored for core/scope-triggered/advisory gates
 
 ### 0.1.1 Drift Audit Checklist (Mechanical)
 
@@ -51,6 +51,9 @@ rg -n 'asupersync|ml-kem|anyhow' -S Cargo.toml crates/*/Cargo.toml
 # Legacy oracle path/bootstrap drift.
 rg -n 'legacy_openssh_code/openssh-portable|git clone https://github.com/openssh/openssh-portable' -S *.md
 test -d legacy_openssh_code/openssh-portable || echo "missing local OpenSSH oracle checkout (run bootstrap clone command)"
+
+# Workflow presence drift.
+ls -1 .github/workflows/*.yml
 ```
 
 ### 0.2 Bootstrap

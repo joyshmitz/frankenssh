@@ -418,8 +418,9 @@ Advisory security gate (non-blocking unless policy escalates):
 cargo audit
 ```
 
-The CI workflow definition in `.github/workflows` is currently pending and MUST
-be authored before implementation work is considered release-track.
+The CI workflow definitions under `.github/workflows` are part of the normative
+release gate topology and MUST stay aligned with this section (core,
+scope-triggered, advisory).
 
 ## 20. Milestones and Exit Criteria
 
@@ -493,12 +494,12 @@ Status as of February 14, 2026:
 3. OpenSSH oracle checkout path is documented and locally provisionable.
 4. `asupersync` integration is planned/deferred in current Cargo snapshot.
 5. `ml-kem` crate selection is planned/deferred in current Cargo snapshot.
-6. CI workflow under `.github/workflows` is pending.
+6. CI workflows under `.github/workflows` are authored for core/scope-triggered/advisory gates.
 7. Implementation remains at bootstrap documentation stage.
 
 ## 24. Immediate Execution Checklist
 
-1. Author CI workflow for required cargo gates.
+1. Keep `.github/workflows` aligned with the normative gate topology in Section 19.
 2. Finish transport/auth/channel transition tables in
    `EXISTING_SSH_STRUCTURE.md`.
 3. Implement Phase 2 `fsh-types`/`fsh-error`/`fsh-wire` minimum slice.
