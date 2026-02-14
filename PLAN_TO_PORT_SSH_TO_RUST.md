@@ -8,6 +8,7 @@
 > success criteria.
 >
 > Companion documents:
+> - `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` — canonical normative spec (supersedes on conflicts)
 > - `PROPOSED_ARCHITECTURE.md` — crate topology, dependency DAG, trait contracts
 > - `AGENTS.md` — guardrails for agent changes in this repo
 > - `EXISTING_SSH_STRUCTURE.md` — behavior extraction from OpenSSH
@@ -26,6 +27,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete.
 - [x] Reconcile dependency claims vs workspace reality (`asupersync` currently deferred/commented in `Cargo.toml`; `ml-kem` planned but not yet selected in workspace dependencies)
 - [x] Add explicit legacy-oracle bootstrap note for `legacy_openssh_code/openssh-portable` and clarify that the checkout is local/gitignored
 - [x] Remove/repair stale claims that companion docs "will be created later" when they already exist
+- [x] Author `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` and mark it as canonical where conflicts exist
 - [ ] CI workflow under `.github/workflows` (fmt/check/clippy/test)
 
 ### 0.1.1 Drift Audit Checklist (Mechanical)

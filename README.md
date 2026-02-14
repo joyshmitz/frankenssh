@@ -23,7 +23,7 @@ This project uses four pervasive disciplines:
 - Project charter and porting docs established
 - 15-crate workspace scaffolded
 - Core porting specs written (`EXISTING_SSH_STRUCTURE.md`, `PROPOSED_ARCHITECTURE.md`, `PLAN_TO_PORT_SSH_TO_RUST.md`, `FEATURE_PARITY.md`)
-- Canonical normative spec (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`) not yet authored
+- Canonical normative spec authored (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`)
 - CI workflow under `.github/workflows` not yet authored
 - Implementation not yet started (Phase 1: Bootstrap)
 - OpenSSH oracle checkout is local/gitignored and may need bootstrap on a fresh clone
@@ -60,6 +60,7 @@ Track handshake latency, transfer throughput, and channel overhead; gate crypto 
 
 - `AGENTS.md`
 - `FRANKENSSH_PROPOSAL.md` (comprehensive top-level proposal)
+- `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md` (canonical normative spec)
 - `EXISTING_SSH_STRUCTURE.md`
 - `PROPOSED_ARCHITECTURE.md`
 - `PLAN_TO_PORT_SSH_TO_RUST.md`
@@ -73,6 +74,10 @@ These four docs are the canonical porting-to-Rust workflow for this repo:
 - `EXISTING_SSH_STRUCTURE.md`
 - `PROPOSED_ARCHITECTURE.md`
 - `FEATURE_PARITY.md`
+
+Normative authority for conflict resolution:
+
+- `COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`
 
 ## Legacy Oracle Bootstrap
 
