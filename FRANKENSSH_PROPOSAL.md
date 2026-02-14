@@ -725,8 +725,8 @@ pub enum FshError {
     #[error("agent error: {0}")]
     Agent(String),
 
-    #[error("sftp error: {status}")]
-    Sftp { status: SftpStatus, message: String },
+    #[error("sftp error: status={status_code}")]
+    Sftp { status_code: u32, message: String },
 
     #[error("permission denied")]
     PermissionDenied,

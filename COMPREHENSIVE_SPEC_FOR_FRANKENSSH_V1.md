@@ -373,8 +373,8 @@ At minimum, the following mappings are REQUIRED:
 | `Protocol` | `SSH_DISCONNECT_PROTOCOL_ERROR` (2) |
 | `KexFailed` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
 | `UnsupportedAlgorithm` | `SSH_DISCONNECT_KEY_EXCHANGE_FAILED` (3) |
-| `ServiceNotAvailable` (or equivalent service-gate failure class) | `SSH_DISCONNECT_SERVICE_NOT_AVAILABLE` (7) |
 | `Crypto` | `SSH_DISCONNECT_MAC_ERROR` (5) |
+| `ServiceNotAvailable` (or equivalent service-gate failure class) | `SSH_DISCONNECT_SERVICE_NOT_AVAILABLE` (7) |
 | `HostKeyVerification` | `SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE` (9) |
 | `Timeout` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
 | `Cancelled` | `SSH_DISCONNECT_BY_APPLICATION` (11) |
