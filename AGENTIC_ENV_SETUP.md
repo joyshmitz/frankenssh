@@ -44,6 +44,13 @@
 - `[agents].codex` перевизначено без застарілого флага `--enable web_search=live` (він ламав старт Codex pane у поточній версії CLI).
 - `[gemini_setup]`
   - `auto_select_pro_model = false` (щоб `ntm spawn` не блокувався на auto-setup Gemini model picker і не зависав на timeout)
+- `[recovery]`
+  - `enabled = false`
+  - `auto_inject_on_spawn = false`
+  - офіційно вимикає smart session recovery інжект у freshly spawned pane-агенти
+- `[context_rotation]`
+  - `enabled = false`
+  - прибирає автоматичні context-rotation інтервенції з додатковими recovery prompt-ами
 
 ### `~/.config/ntm/hooks.toml`
 
@@ -256,7 +263,10 @@ cd /home/ubuntu/mcp_agent_mail
    - зауваження про `bd not found` як blocking/error (у поточному `ntm doctor` це не blocking failure)
 
 7. Auto-recovery може неочікувано інжектити “continue bead” контекст  
-   Щоб `spawn` не запускав виконання старих `br` задач автоматично, тримати:
+   Стабільний спосіб: зафіксувати в `~/.config/ntm/config.toml`:
+   - `[recovery].enabled = false`
+   - `[recovery].auto_inject_on_spawn = false`
+   За потреби дублювати env-перемінними:
    - `NTM_RECOVERY_ENABLED=false`
    - `NTM_RECOVERY_AUTO_INJECT=false`
 
