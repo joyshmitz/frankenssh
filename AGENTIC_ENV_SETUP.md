@@ -177,14 +177,16 @@ curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents
 - `ntm status frankenssh`: або здорова активна сесія, або `session not found` якщо сесія ще не піднята
 - Mail API `/mail/api/projects/data-projects-frankenssh/agents`: повертає актуальний список агентів
 
-### 6.1 Поточний стан агентів у Mail (після очищення)
+### 6.1 Поточний стан агентів у Mail
 
-Станом на 2026-02-14 у `data-projects-frankenssh` залишено лише:
+Станом на 2026-02-14 у `data-projects-frankenssh` використовується такий робочий набір:
 
 - `NavyHollow` (`program=ntm`) — session coordinator/оркестрація.
 - `RainyRidge` (`program=gemini-cli`) — Gemini-агент для роботи в pane.
+- `AmberCastle` (`program=codex-cli`, `model=gpt-5.3-codex`) — Codex 5.3 агент.
+- `VioletDesert` (`program=claude-code`, `model=claude-opus-4.6`) — Claude 4.6 агент.
 
-Додаткові неактивні/нереференсні `codex-cli` і `claude-code` агенти видалені, щоб не засмічувати UI й адресну книгу.
+Будь-які додаткові тимчасові/дубльовані агенти прибираються через `projects prune-agents`, щоб не засмічувати UI й адресну книгу.
 
 ### 6.2 Безпечне очищення зайвих агентів (без костилів)
 
@@ -197,7 +199,9 @@ cd /home/ubuntu/mcp_agent_mail
 .venv/bin/python -m mcp_agent_mail.cli projects prune-agents data-projects-frankenssh \
   --keep-latest-per-program 0 \
   --keep-agent NavyHollow \
-  --keep-agent RainyRidge
+  --keep-agent RainyRidge \
+  --keep-agent AmberCastle \
+  --keep-agent VioletDesert
 ```
 
 Apply:
@@ -208,6 +212,8 @@ cd /home/ubuntu/mcp_agent_mail
   --keep-latest-per-program 0 \
   --keep-agent NavyHollow \
   --keep-agent RainyRidge \
+  --keep-agent AmberCastle \
+  --keep-agent VioletDesert \
   --apply --yes
 ```
 
@@ -282,7 +288,7 @@ cd /home/ubuntu/mcp_agent_mail
 - `cargo clippy --all-targets -- -D warnings` — pass
 - `cargo test --workspace` — pass (у workspace наразі немає реалізованих тест-кейсів, всі crates показали `0 tests`)
 - `.venv/bin/pytest -q tests/test_cli_extended.py` у `/home/ubuntu/mcp_agent_mail` — pass (включно з тестом для `projects prune-agents`)
-- `curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents` → `{"agents":["NavyHollow","RainyRidge"]}`
+- `curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents` → `{"agents":["AmberCastle","NavyHollow","RainyRidge","VioletDesert"]}`
 
 ### 11.1 Операційний smoke-check (2026-02-14, після підйому сесії `frankenssh`)
 
