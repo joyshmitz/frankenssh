@@ -1,0 +1,16 @@
+[package]
+name = "fsh-harness"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+frankenssh = { path = "../../frankenssh" }
+fsh-wire = { workspace = true }
+fsh-crypto = { workspace = true }
+fsh-types = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+proptest = { workspace = true }

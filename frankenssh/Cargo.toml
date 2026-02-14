@@ -1,0 +1,15 @@
+[package]
+name = "frankenssh"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+fsh-types = { workspace = true }
+fsh-error = { workspace = true }
+fsh-transport = { workspace = true }
+fsh-auth = { workspace = true }
+fsh-channel = { workspace = true }
+fsh-session = { workspace = true }
+fsh-sftp = { workspace = true }
+fsh-forward = { workspace = true }
+fsh-agent = { workspace = true }

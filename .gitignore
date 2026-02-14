@@ -1,0 +1,32 @@
+# Rust build outputs
+/target
+/target-local
+**/*.rs.bk
+
+# Local agent/task tooling state
+.bv/
+.beads/
+
+# Local oracle clone (not part of clean-room implementation)
+legacy_openssh_code/
+crates/*/.git/
+crates/*/.git.nested_backup/
+
+# Generated artifacts and benchmark outputs
+artifacts/
+baselines/
+golden_outputs/
+golden_checksums.txt
+
+# OS/editor/env/scratch files
+.DS_Store
+._*
+.idea/
+.vscode/
+.env
+.env.*
+*.swp
+*.swo
+*.out
+*.log
+*.tmp

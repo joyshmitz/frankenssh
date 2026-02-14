@@ -1,0 +1,9 @@
+[package]
+name = "fsh-wire"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+fsh-types = { workspace = true }
+fsh-error = { workspace = true }
+serde = { workspace = true }

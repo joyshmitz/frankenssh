@@ -1,0 +1,15 @@
+[package]
+name = "fsh-server"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+fsh-types = { workspace = true }
+fsh-error = { workspace = true }
+fsh-transport = { workspace = true }
+fsh-auth = { workspace = true }
+fsh-channel = { workspace = true }
+fsh-session = { workspace = true }
+# asupersync = { workspace = true }  # uncomment when /dp/asupersync available
+tokio = { workspace = true }
+tracing = { workspace = true }
