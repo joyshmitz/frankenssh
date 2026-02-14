@@ -80,7 +80,7 @@ Status transitions are row-level and evidence-driven:
 | Binary packet parsing (AEAD: chacha20-poly1305) | not_started | Phase 3-4 |
 | Binary packet parsing (AEAD: aes256-gcm) | not_started | Phase 3-4 |
 | Binary packet parsing (encrypted, non-AEAD) | not_started | Phase 4 |
-| Sequence number management | not_started | Phase 4 |
+| Sequence number management + transport limits/backpressure | not_started | Phase 4 |
 | Strict KEX extension | not_started | Phase 4 |
 | Version string exchange | not_started | Phase 4 |
 | curve25519-sha256 KEX | not_started | Phase 3 |

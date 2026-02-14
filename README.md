@@ -65,6 +65,7 @@ Track handshake latency, transfer throughput, and channel overhead; gate crypto 
 - `PROPOSED_ARCHITECTURE.md`
 - `PLAN_TO_PORT_SSH_TO_RUST.md`
 - `FEATURE_PARITY.md`
+- `COMPATIBILITY_EXCEPTIONS.md` (approved compatibility deviations ledger)
 
 ## Porting Artifact Set
 

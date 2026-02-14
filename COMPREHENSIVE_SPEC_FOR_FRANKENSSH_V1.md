@@ -453,6 +453,10 @@ Harness MUST cover:
 3. channel lifecycle correctness
 4. disconnect code correctness under protocol error scenarios
 5. regression goldens for packet-level sequencing where feasible
+6. deterministic replay package in Phase 8, containing at minimum:
+   - `session-trace.jsonl` (timestamped state/message trace with mode/config)
+   - `oracle-diff.md` (behavior delta report against OpenSSH oracle runs)
+   - provenance block (`git_sha`, `toolchain`, `command`, `utc_timestamp`)
 
 OpenSSH oracle path (local gitignored dependency):
 
@@ -469,6 +473,24 @@ Initial SLO targets (subject to calibration once implementation lands):
 
 Every optimization change MUST publish before/after deltas with workload and
 environment identifiers.
+
+### 18.1 Runtime Resource Limits (Phase 4 Normative Baseline)
+
+To bound parser/transport resource exposure, Phase 4 transport implementation
+MUST enforce concrete defaults (configurable, but never unbounded):
+
+1. `max_packet_bytes`: `262144` (256 KiB) hard cap per inbound packet.
+2. `max_channels_per_connection`: `64`.
+3. `max_inbound_buffer_bytes_per_connection`: `8388608` (8 MiB).
+4. `max_outbound_buffer_bytes_per_connection`: `8388608` (8 MiB).
+5. `max_in_flight_global_requests`: `32`.
+
+Backpressure behavior MUST be deterministic:
+
+1. when inbound/outbound buffer caps are reached, transport MUST stop accepting
+   new application payload until pressure recovers below a documented watermark;
+2. if pressure cannot recover within a bounded timeout, connection handling MUST
+   fail closed with a mapped disconnect reason.
 
 ## 19. CI Gate Topology (Release-Critical)
 
@@ -587,6 +609,7 @@ Status as of February 14, 2026:
 3. Implement Phase 2 `fsh-types`/`fsh-error`/`fsh-wire` minimum slice.
 4. Land first conformance harness smoke test against local OpenSSH oracle.
 5. Update `FEATURE_PARITY.md` only with evidence-backed status changes.
+6. Record any approved behavior divergence in `COMPATIBILITY_EXCEPTIONS.md`.
 
 ## 25. Change Control
 
@@ -598,6 +621,8 @@ until either:
 
 1. implementation is corrected, or
 2. this document is updated with explicit rationale and acceptance evidence.
+3. any approved compatibility deviation is recorded in
+   `COMPATIBILITY_EXCEPTIONS.md` with scope, rationale, and evidence links.
 
 ## 26. Phase 2 API Contract Appendix (Normative)
 
