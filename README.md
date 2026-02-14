@@ -24,7 +24,7 @@ This project uses four pervasive disciplines:
 - 15-crate workspace scaffolded
 - Core porting specs written (`EXISTING_SSH_STRUCTURE.md`, `PROPOSED_ARCHITECTURE.md`, `PLAN_TO_PORT_SSH_TO_RUST.md`, `FEATURE_PARITY.md`)
 - Canonical normative spec authored (`COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md`)
-- CI workflow under `.github/workflows` not yet authored
+- CI workflows authored under `.github/workflows` (`core`, `scope-gates`, `advisory-security`)
 - Implementation not yet started (Phase 1: Bootstrap)
 - OpenSSH oracle checkout is local/gitignored and may need bootstrap on a fresh clone
 

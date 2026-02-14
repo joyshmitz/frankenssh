@@ -1,0 +1,74 @@
+name: scope-gates
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "crates/fsh-types/**"
+      - "crates/fsh-error/**"
+      - "crates/fsh-wire/**"
+      - "crates/fsh-crypto/**"
+      - "crates/fsh-transport/**"
+      - "crates/fsh-auth/**"
+      - "crates/fsh-channel/**"
+      - "crates/fsh-session/**"
+      - "crates/fsh-sftp/**"
+      - "crates/fsh-forward/**"
+      - "crates/fsh-agent/**"
+      - "crates/fsh-server/**"
+      - "crates/fsh-client/**"
+      - "crates/fsh-harness/**"
+      - "frankenssh/**"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "crates/fsh-types/**"
+      - "crates/fsh-error/**"
+      - "crates/fsh-wire/**"
+      - "crates/fsh-crypto/**"
+      - "crates/fsh-transport/**"
+      - "crates/fsh-auth/**"
+      - "crates/fsh-channel/**"
+      - "crates/fsh-session/**"
+      - "crates/fsh-sftp/**"
+      - "crates/fsh-forward/**"
+      - "crates/fsh-agent/**"
+      - "crates/fsh-server/**"
+      - "crates/fsh-client/**"
+      - "crates/fsh-harness/**"
+      - "frankenssh/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scope-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance-and-bench:
+    name: Scope Gates (harness + bench)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo test -p fsh-harness -- --nocapture
+        run: cargo test -p fsh-harness -- --nocapture
+
+      - name: cargo bench -p fsh-harness
+        run: cargo bench -p fsh-harness
