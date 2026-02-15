@@ -125,7 +125,8 @@ Beyond Rust CI (`core-ci`, `scope-gates`, `advisory-security`), two
 documentation-quality gates enforce governance contracts:
 
 - **selfdoc-lint** (path-filtered: `.beads/**`, key docs, workflow) — validates
-  that every active implementation bead (`issue_type=task`, `status=open|in_progress`) has required sections:
+  that every non-terminal implementation bead (`issue_type=task`, all statuses
+  except `closed`/`tombstone`, including `blocked`/`deferred`/`pinned`) has required sections:
   Acceptance Criteria, Unit Tests, E2E, Structured Logging, Evidence,
   Traceability, and Dependency Justification (when deps exist). Three phases:
   `audit` (report-only), `default` (fail on errors), `strict` (fail on
@@ -156,6 +157,9 @@ bash scripts/check_review_anchors.sh
 
 # negative tests for all gates
 bash scripts/test_governance_gates.sh
+
+# CI-mode (skips clean-path checks already run by workflow)
+GOVERNANCE_TEST_MODE=ci bash scripts/test_governance_gates.sh
 ```
 
 ## Validation Commands
