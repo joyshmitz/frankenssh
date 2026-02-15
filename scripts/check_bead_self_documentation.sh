@@ -93,6 +93,10 @@ while IFS= read -r line; do
   issue_type=$(printf '%s' "$line" | jq -r '.issue_type // ""')
   [[ "$issue_type" == "task" ]] || continue
 
+  # F1: only lint actionable beads (open, in_progress); skip closed/resolved
+  status=$(printf '%s' "$line" | jq -r '.status // ""')
+  [[ "$status" == "open" || "$status" == "in_progress" ]] || continue
+
   ((TOTAL++)) || true
   bead_id=$(printf '%s' "$line" | jq -r '.id')
   title=$(printf '%s' "$line" | jq -r '.title')
@@ -111,38 +115,49 @@ while IFS= read -r line; do
     fi
   done
 
-  # R2 — ## Traceability must reference PLAN and FEATURE_PARITY
+  # R2 — ## Traceability must have structured PLAN and FEATURE_PARITY refs
+  # F3: require "PLAN:" + section ref and "FEATURE_PARITY:" + row ref
   if grep -q "^## Traceability$" "$desc_file" 2>/dev/null; then
     trace=$(extract_section "$desc_file" "Traceability")
-    if ! printf '%s' "$trace" | grep -qi "PLAN"; then
+    if ! printf '%s' "$trace" | grep -qE 'PLAN:.*§'; then
       add_violation "error" "$bead_id" "TRACE_PLAN" \
-        "## Traceability missing PLAN reference" \
-        "Add 'PLAN: §...' to ## Traceability in ${bead_id}"
+        "## Traceability missing structured PLAN reference (expected 'PLAN: §...')" \
+        "Add 'PLAN: §X.Y item Z' to ## Traceability in ${bead_id}"
     fi
-    if ! printf '%s' "$trace" | grep -qi "FEATURE_PARITY"; then
+    if ! printf '%s' "$trace" | grep -qiE 'FEATURE_PARITY:.*row'; then
       add_violation "error" "$bead_id" "TRACE_PARITY" \
-        "## Traceability missing FEATURE_PARITY reference" \
-        "Add 'FEATURE_PARITY: row ...' to ## Traceability in ${bead_id}"
+        "## Traceability missing structured FEATURE_PARITY reference (expected 'FEATURE_PARITY: row ...')" \
+        "Add 'FEATURE_PARITY: row N' to ## Traceability in ${bead_id}"
     fi
   fi
 
-  # R3 — ## E2E must have content (command/expected or N/A + justification)
+  # R3 — ## E2E must have substantive content
+  # F2: bare "N/A" without justification is rejected; require either
+  #     a command/scope pattern OR "N/A" followed by explanatory text
   if grep -q "^## E2E$" "$desc_file" 2>/dev/null; then
     e2e=$(extract_section "$desc_file" "E2E" | sed '/^[[:space:]]*$/d')
     if [[ -z "$e2e" ]]; then
       add_violation "warning" "$bead_id" "E2E_EMPTY" \
         "## E2E section has no content" \
         "Add command/expected or 'N/A + justification' in ${bead_id}"
+    elif printf '%s' "$e2e" | grep -qiE '^-?\s*N/?A\s*$'; then
+      add_violation "warning" "$bead_id" "E2E_BARE_NA" \
+        "## E2E has bare N/A without justification" \
+        "Change to 'N/A + justification: <reason>' in ${bead_id}"
     fi
   fi
 
-  # R4 — ## Structured Logging must have content
+  # R4 — ## Structured Logging must have substantive content
   if grep -q "^## Structured Logging$" "$desc_file" 2>/dev/null; then
     sl=$(extract_section "$desc_file" "Structured Logging" | sed '/^[[:space:]]*$/d')
     if [[ -z "$sl" ]]; then
       add_violation "warning" "$bead_id" "LOGGING_EMPTY" \
         "## Structured Logging section has no content" \
         "Add requirements or 'N/A + justification' in ${bead_id}"
+    elif printf '%s' "$sl" | grep -qiE '^-?\s*N/?A\s*$'; then
+      add_violation "warning" "$bead_id" "LOGGING_BARE_NA" \
+        "## Structured Logging has bare N/A without justification" \
+        "Change to 'N/A + justification: <reason>' in ${bead_id}"
     fi
   fi
 
