@@ -119,6 +119,45 @@ Preflight before running conformance harness:
 test -d legacy_openssh_code/openssh-portable || { echo "missing OpenSSH oracle checkout"; exit 1; }
 ```
 
+## Governance Gates
+
+Beyond Rust CI (`core-ci`, `scope-gates`, `advisory-security`), two
+documentation-quality gates run on every PR:
+
+- **selfdoc-lint** (path-filtered: `.beads/**`, key docs, workflow) — validates
+  that every implementation bead (`issue_type=task`) has required sections:
+  Acceptance Criteria, Unit Tests, E2E, Structured Logging, Evidence,
+  Traceability, and Dependency Justification (when deps exist). Three phases:
+  `audit` (report-only), `default` (fail on errors), `strict` (fail on
+  errors + warnings).
+
+- **doc-drift** (always-run) — two independent checks:
+  1. **Contract drift**: 7 cross-file invariants (ParseError provenance, helper
+     baseline, ExtInfo, wire fail-closed) verified across SPEC/PLAN/PROPOSAL/ARCH.
+  2. **Anchor validation**: Layer A checks all checklist anchors for file
+     existence and line reachability; Layer B checks 10 critical anchors against
+     expected regex in `scripts/anchor_expectations.tsv`.
+
+Local commands:
+
+```bash
+# selfdoc-lint (default phase)
+bash scripts/check_bead_self_documentation.sh
+
+# selfdoc-lint (audit / strict)
+SELFDOC_LINT_PHASE=audit bash scripts/check_bead_self_documentation.sh
+SELFDOC_LINT_PHASE=strict bash scripts/check_bead_self_documentation.sh
+
+# doc-contract-drift
+bash scripts/check_doc_contract_drift.sh
+
+# anchor validation
+bash scripts/check_review_anchors.sh
+
+# negative tests for all gates
+bash scripts/test_governance_gates.sh
+```
+
 ## Validation Commands
 
 ```bash
