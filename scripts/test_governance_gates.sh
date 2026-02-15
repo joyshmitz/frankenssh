@@ -150,6 +150,12 @@ run_test "anchor-check: clean main" 0 \
   bash -c "cd '$t10_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
 
 # ---------------------------------------------------------------------------
+# T11: anchor-check — missing expectations file → hard fail
+# ---------------------------------------------------------------------------
+run_test "anchor-check: missing expectations hard fail" 1 \
+  bash -c "cd '$t10_dir' && ANCHOR_EXPECTATIONS=/tmp/nonexistent.tsv bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 printf '\n=== results: %d/%d passed ===\n' "$PASS" "$TOTAL"
