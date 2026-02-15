@@ -96,10 +96,10 @@ check_contract "extinfo-baseline" \
   "ExtInfo" \
   "$SPEC" "$PROP"
 
-# C7: wire fail-closed through ParseError
+# C7: wire fail-closed through ParseError (SPEC + PLAN)
 check_contract "wire-fail-closed" \
   "fail.closed.*ParseError|ParseError.*fail.closed|fail closed.*deterministic" \
-  "$SPEC"
+  "$SPEC" "$PLAN"
 
 # --- report ----------------------------------------------------------------
 

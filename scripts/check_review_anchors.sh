@@ -33,8 +33,8 @@ MISMATCHED=0
 
 # --- Layer A: extract all anchors and check existence ----------------------
 
-# Anchors look like FILENAME.md:NNN (may contain digits/underscores in name)
-grep -oE '[A-Za-z_0-9]+\.md:[0-9]+' "$CHECKLIST" | sort -u > "$tmpdir/anchors.txt"
+# Anchors: FILENAME.md:NNN or path/to/file-name.md:NNN
+grep -oE '[A-Za-z_0-9./-]+\.md:[0-9]+' "$CHECKLIST" | sort -u > "$tmpdir/anchors.txt"
 
 while IFS= read -r anchor; do
   file="${anchor%%:*}"
@@ -58,8 +58,13 @@ done < "$tmpdir/anchors.txt"
 
 # --- Layer B: semantic regex check -----------------------------------------
 
-if [[ -f "$EXPECTATIONS" ]]; then
-  while IFS=$'\t' read -r anchor regex rule_id; do
+if [[ ! -f "$EXPECTATIONS" ]]; then
+  printf 'ERROR: expectations file not found: %s\n' "$EXPECTATIONS" >&2
+  printf '  Layer B requires this file. Create it or set ANCHOR_EXPECTATIONS.\n' >&2
+  exit 1
+fi
+
+while IFS=$'\t' read -r anchor regex rule_id; do
     # Skip comments and empty lines
     [[ "$anchor" =~ ^#.*$ || -z "$anchor" ]] && continue
 
@@ -81,7 +86,6 @@ if [[ -f "$EXPECTATIONS" ]]; then
         >> "$mismatched_file"
     fi
   done < "$EXPECTATIONS"
-fi
 
 # --- report ----------------------------------------------------------------
 
