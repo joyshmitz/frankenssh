@@ -309,6 +309,37 @@ Rules:
 
 ---
 
+## Agent Mail Identity
+
+Fixed agent names for MCP Agent Mail coordination in this project:
+
+| Program | Agent Name | Role |
+|---|---|---|
+| ntm | NavyHollow | Session orchestrator (not an AI agent) |
+| claude-code | LilacCat | Review, spec compliance, trust-boundary code |
+| codex-cli | SwiftGlacier | Authoring, docs, governance, batch ops |
+| gemini-cli | BrownCanyon | Prototyping, exploration |
+
+NavyHollow is the `ntm` process itself — it manages tmux panes, monitors agent
+health/context, and routes messages. It does NOT read Agent Mail inbox or respond
+to messages. Its registration exists so `ntm` can send system notifications via
+the Mail API. Human interacts with it via CLI: `ntm send`, `ntm status`,
+`ntm view`, `ntm zoom`.
+
+At session start, every AI agent MUST:
+
+1. Call `register_agent` (or `macro_start_session`) with:
+   - `project_key`: `/data/projects/frankenssh`
+   - `name`: your assigned name from the table above
+   - `program`: your program identifier
+   - `model`: your current model
+2. Call `fetch_inbox` to check for pending messages.
+3. Acknowledge messages with `ack_required = true`.
+
+Do NOT use ntm auto-generated names. Do NOT re-register under a different name.
+
+---
+
 ## Porting Doctrine (Spec-First, Conformance-First)
 
 Follow this sequence:
