@@ -319,6 +319,56 @@ cd /home/ubuntu/mcp_agent_mail
 - `.venv/bin/pytest -q tests/test_cli_extended.py` у `/home/ubuntu/mcp_agent_mail` — pass (включно з тестом для `projects prune-agents`)
 - `curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents` → `{"agents":[]}` (агенти зʼявляються після `ntm spawn`)
 
+---
+
+## 12. Model Capability Baseline (2026-02-15)
+
+Бенчмарки зібрані з публічних джерел (SWE-bench, Terminal-Bench, LiveCodeBench, LMSYS, офіційні technical reports) та історичних даних CASS (447 сесій / 18226 повідомлень frankenssh).
+
+### 12.1 Зведена таблиця
+
+| Метрика | Claude Opus 4.6 | Claude Sonnet 4.5 | GPT-5.3 Codex | Gemini 3 Pro |
+|---|---|---|---|---|
+| SWE-bench Verified | 79-81% | 77.2% | 78.2% | 76.2% |
+| Terminal-Bench | 65.4% | — | **77.3%** | — |
+| LiveCodeBench | — | — | — | **2439 Elo** |
+| Контекст (max) | **1M** (76% MRCR) | 200K | 400K | 1M (деградує до 26% на 1M) |
+| IFEval | ~92% | ~90% | ~89% | 85% |
+| Відносна швидкість | 1x | ~10x | ~1.25x | ~1x |
+| Відносна ціна | 1x | 0.6x | ~1x | <1x |
+
+Відомі проблеми:
+- **Codex GPT-5.3:** file editing баги (cat rewrites), context compaction bug, потребує explicit instructions
+- **Gemini 3 Pro:** 45% API error rate під навантаженням, слабкий IFEval (85%), контекст деградує після 150K
+
+### 12.2 Емпіричні дані з CASS (frankenssh)
+
+- **Claude (Opus):** домінує в review/verification, spec compliance, знаходить тонкі баги (Utf8Error type mismatch, read_bool RFC semantics)
+- **Codex:** ефективний в authoring/governance docs, batch операціях
+- **Gemini:** мінімальна участь (одна сесія), недостатньо даних
+- **Оптимальний патерн:** Codex пропонує → Claude рев'юїть → людина комітить
+
+### 12.3 Рекомендація: task type → model
+
+| Тип завдання | Рекомендований | Причина |
+|---|---|---|
+| Spec compliance, review | Opus 4.6 | Найвищий IFEval, 1M контекст без деградації |
+| Trust boundary код (fsh-wire, fsh-crypto) | Opus 4.6 | SWE-bench лідер, критичний код |
+| Некритична імплементація | Sonnet 4.5 | 77% SWE-bench, 10x швидше, 40% дешевше |
+| Batch authoring, docs, governance | Codex GPT-5.3 | Terminal-Bench 77%, batch-ефективний |
+| Прототипування, exploration | Gemini 3 Pro | LiveCodeBench лідер, але нестабільний API |
+| Fuzz/proptest generation | Sonnet 4.5 / Codex | Механічна задача, deep reasoning не потрібен |
+| Evidence artifacts | Opus 4.6 | Потребує traceability і spec references |
+
+### 12.4 Політика актуальності
+
+Ця таблиця застаріває з кожним релізом моделей. Оновлювати при:
+- зміні версії моделі в ntm або MCP конфігурації
+- появі нових публічних бенчмарків
+- накопиченні достатніх нових даних у CASS (>50 сесій з моменту останнього оновлення)
+
+---
+
 ### 11.1 Операційний smoke-check (2026-02-14, після підйому сесії `frankenssh`)
 
 - `ntm list` → `frankenssh: 1 windows (attached)` + додаткова стороння сесія `repo-updater-parity`
