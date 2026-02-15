@@ -93,9 +93,15 @@ while IFS= read -r line; do
   issue_type=$(printf '%s' "$line" | jq -r '.issue_type // ""')
   [[ "$issue_type" == "task" ]] || continue
 
-  # F1: only lint actionable beads (open, in_progress); skip closed/resolved
-  status=$(printf '%s' "$line" | jq -r '.status // ""')
-  [[ "$status" == "open" || "$status" == "in_progress" ]] || continue
+  # F1: lint all non-terminal task statuses.
+  # Terminal statuses are skipped; active/custom statuses are linted.
+  status=$(printf '%s' "$line" | jq -r '
+    if (.status // null) == null then "open"
+    elif (.status | type) == "object" then (.status.custom // "open")
+    else .status
+    end
+  ')
+  [[ "$status" == "closed" || "$status" == "tombstone" ]] && continue
 
   ((TOTAL++)) || true
   bead_id=$(printf '%s' "$line" | jq -r '.id')

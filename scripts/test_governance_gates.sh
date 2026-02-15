@@ -5,10 +5,23 @@
 # gate script detects the problem (non-zero exit).
 #
 # Usage: bash scripts/test_governance_gates.sh
+# Env:
+#   GOVERNANCE_TEST_MODE=full|ci  (default: full)
+#     full — run complete suite
+#     ci   — skip clean-path checks already executed directly by workflow
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+MODE="${GOVERNANCE_TEST_MODE:-full}"
+
+case "$MODE" in
+  full|ci) ;;
+  *)
+    printf 'ERROR: invalid GOVERNANCE_TEST_MODE "%s" (must be full|ci)\n' "$MODE" >&2
+    exit 2
+    ;;
+esac
 
 tmpdir=$(mktemp -d)
 trap 'rm -r "$tmpdir"' EXIT
@@ -16,6 +29,7 @@ trap 'rm -r "$tmpdir"' EXIT
 PASS=0
 FAIL=0
 TOTAL=0
+SKIP=0
 
 run_test() {
   local name="$1" expect_exit="$2"
@@ -35,13 +49,21 @@ run_test() {
   fi
 }
 
+skip_test() {
+  local name="$1" reason="$2"
+  ((SKIP++)) || true
+  printf '  [SKIP] %s (%s)\n' "$name" "$reason"
+}
+
 printf '=== governance gate tests ===\n\n'
 
 # ---------------------------------------------------------------------------
 # T0: selfdoc-lint — real beads golden-path → pass
 # ---------------------------------------------------------------------------
+t0_dir="$tmpdir/t0"
+mkdir -p "$t0_dir"
 run_test "selfdoc-lint: real beads pass" 0 \
-  bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
+  bash -c "cd '$t0_dir' && SELFDOC_ISSUES_FILE='$REPO_DIR/.beads/issues.jsonl' bash '$REPO_DIR/scripts/check_bead_self_documentation.sh'"
 
 # ---------------------------------------------------------------------------
 # T1: selfdoc-lint — bead with no sections → fail
@@ -82,6 +104,17 @@ printf '{"id":"closed-001","title":"Old","description":"nothing","status":"close
 
 run_test "selfdoc-lint: closed task skipped" 0 \
   env SELFDOC_ISSUES_FILE="$t4a_dir/issues.jsonl" bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
+
+# ---------------------------------------------------------------------------
+# T4b: selfdoc-lint — blocked task remains actionable → fail
+# ---------------------------------------------------------------------------
+t4b_dir="$tmpdir/t4b"
+mkdir -p "$t4b_dir"
+printf '{"id":"blocked-001","title":"Blocked","description":"nothing","status":"blocked","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z","created_by":"test","updated_at":"2026-01-01T00:00:00Z","source_repo":".","compaction_level":0,"original_size":0}\n' \
+  > "$t4b_dir/issues.jsonl"
+
+run_test "selfdoc-lint: blocked task linted" 1 \
+  env SELFDOC_ISSUES_FILE="$t4b_dir/issues.jsonl" bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
 
 # ---------------------------------------------------------------------------
 # T5: selfdoc-lint — bare N/A in E2E → warning (strict fails)
@@ -128,8 +161,12 @@ for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md PRO
   cp "$REPO_DIR/$f" "$t8_dir/"
 done
 
-run_test "doc-contract-drift: clean main" 0 \
-  bash -c "cd '$t8_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+if [[ "$MODE" == "ci" ]]; then
+  skip_test "doc-contract-drift: clean main" "mode=ci (already checked by workflow step)"
+else
+  run_test "doc-contract-drift: clean main" 0 \
+    bash -c "cd '$t8_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+fi
 
 # ---------------------------------------------------------------------------
 # T9: anchor-check — shift line in SPEC → mismatched anchors → fail
@@ -155,8 +192,12 @@ for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md FRA
 done
 cp "$REPO_DIR/scripts/anchor_expectations.tsv" "$t10_dir/scripts/"
 
-run_test "anchor-check: clean main" 0 \
-  bash -c "cd '$t10_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+if [[ "$MODE" == "ci" ]]; then
+  skip_test "anchor-check: clean main" "mode=ci (already checked by workflow step)"
+else
+  run_test "anchor-check: clean main" 0 \
+    bash -c "cd '$t10_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+fi
 
 # ---------------------------------------------------------------------------
 # T11: anchor-check — missing expectations file → hard fail
@@ -167,7 +208,7 @@ run_test "anchor-check: missing expectations hard fail" 1 \
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
-printf '\n=== results: %d/%d passed ===\n' "$PASS" "$TOTAL"
+printf '\n=== results: %d/%d passed (%d skipped) ===\n' "$PASS" "$TOTAL" "$SKIP"
 if [[ $FAIL -gt 0 ]]; then
   printf 'FAIL: %d test(s) failed\n' "$FAIL"
   exit 1
