@@ -21,18 +21,27 @@ run_test() {
   local name="$1" expect_exit="$2"
   shift 2
   ((TOTAL++)) || true
+  local logfile="$tmpdir/stdout_${TOTAL}.log"
   local actual_exit=0
-  "$@" > "$tmpdir/stdout_${TOTAL}.log" 2>&1 || actual_exit=$?
+  "$@" > "$logfile" 2>&1 || actual_exit=$?
   if [[ "$actual_exit" -eq "$expect_exit" ]]; then
     ((PASS++)) || true
     printf '  [PASS] %s (exit=%d)\n' "$name" "$actual_exit"
   else
     ((FAIL++)) || true
     printf '  [FAIL] %s (expected exit=%d, got=%d)\n' "$name" "$expect_exit" "$actual_exit"
+    printf '         last 5 lines of output:\n'
+    tail -5 "$logfile" | sed 's/^/         | /'
   fi
 }
 
-printf '=== governance gate negative tests ===\n\n'
+printf '=== governance gate tests ===\n\n'
+
+# ---------------------------------------------------------------------------
+# T0: selfdoc-lint — real beads golden-path → pass
+# ---------------------------------------------------------------------------
+run_test "selfdoc-lint: real beads pass" 0 \
+  bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
 
 # ---------------------------------------------------------------------------
 # T1: selfdoc-lint — bead with no sections → fail

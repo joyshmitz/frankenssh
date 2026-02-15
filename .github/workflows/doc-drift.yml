@@ -33,6 +33,11 @@ jobs:
         continue-on-error: true
         run: bash scripts/check_review_anchors.sh
 
+      - name: Run governance gate tests
+        id: gate_tests
+        continue-on-error: true
+        run: bash scripts/test_governance_gates.sh
+
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,6 +58,10 @@ jobs:
           fi
           if [[ "${{ steps.anchors.outcome }}" == "failure" ]]; then
             echo "::error::anchor-check failed"
+            rc=1
+          fi
+          if [[ "${{ steps.gate_tests.outcome }}" == "failure" ]]; then
+            echo "::error::governance gate tests failed"
             rc=1
           fi
           exit $rc

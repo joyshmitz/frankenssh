@@ -122,10 +122,10 @@ test -d legacy_openssh_code/openssh-portable || { echo "missing OpenSSH oracle c
 ## Governance Gates
 
 Beyond Rust CI (`core-ci`, `scope-gates`, `advisory-security`), two
-documentation-quality gates run on every PR:
+documentation-quality gates enforce governance contracts:
 
 - **selfdoc-lint** (path-filtered: `.beads/**`, key docs, workflow) — validates
-  that every implementation bead (`issue_type=task`) has required sections:
+  that every active implementation bead (`issue_type=task`, `status=open|in_progress`) has required sections:
   Acceptance Criteria, Unit Tests, E2E, Structured Logging, Evidence,
   Traceability, and Dependency Justification (when deps exist). Three phases:
   `audit` (report-only), `default` (fail on errors), `strict` (fail on
