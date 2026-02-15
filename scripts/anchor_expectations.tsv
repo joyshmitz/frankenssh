@@ -1,0 +1,13 @@
+# Layer B semantic expectations for critical contract anchors.
+# Format: file:line<TAB>regex<TAB>rule_id
+# Lines starting with # are comments.
+COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:233	read_u32.*read_bool.*read_string	helper-baseline-spec
+COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:267	ExtInfo	extinfo-baseline-spec
+COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:676	ParseError.*re-exported.*fsh-types	parseerror-provenance-spec
+COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md:703	EXT_INFO.*type 7	extinfo-dispatch-spec
+PROPOSED_ARCHITECTURE.md:14	ParseError.*re-export	parseerror-provenance-arch
+PLAN_TO_PORT_SSH_TO_RUST.md:93	read_u32.*read_bool	helper-baseline-plan
+PLAN_TO_PORT_SSH_TO_RUST.md:122	ParseError.*fsh-error	parseerror-provenance-plan
+FRANKENSSH_PROPOSAL.md:480	ParseError.*re-export	parseerror-provenance-proposal
+FRANKENSSH_PROPOSAL.md:982	read_u32.*read_bool	helper-baseline-proposal
+FRANKENSSH_PROPOSAL.md:984	ExtInfo	extinfo-baseline-proposal
