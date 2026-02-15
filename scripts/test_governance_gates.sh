@@ -64,56 +64,90 @@ run_test "selfdoc-lint: audit mode pass" 0 \
   bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
 
 # ---------------------------------------------------------------------------
-# T4: doc-contract-drift — remove ExtInfo from PROPOSAL → fail
+# T4: selfdoc-lint — closed task is skipped → pass
 # ---------------------------------------------------------------------------
-t4_dir="$tmpdir/t4"
-mkdir -p "$t4_dir"
+t4a_dir="$tmpdir/t4a"
+mkdir -p "$t4a_dir"
+printf '{"id":"closed-001","title":"Old","description":"nothing","status":"closed","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z","created_by":"test","updated_at":"2026-01-01T00:00:00Z","source_repo":".","compaction_level":0,"original_size":0}\n' \
+  > "$t4a_dir/issues.jsonl"
+
+run_test "selfdoc-lint: closed task skipped" 0 \
+  env SELFDOC_ISSUES_FILE="$t4a_dir/issues.jsonl" bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
+
+# ---------------------------------------------------------------------------
+# T5: selfdoc-lint — bare N/A in E2E → warning (strict fails)
+# ---------------------------------------------------------------------------
+t5a_dir="$tmpdir/t5a"
+mkdir -p "$t5a_dir"
+printf '{"id":"na-001","title":"Bare NA","description":"## Acceptance Criteria\\nok\\n## Unit Tests\\nok\\n## E2E\\nN/A\\n## Structured Logging\\nN/A\\n## Evidence\\nok\\n## Traceability\\n- PLAN: §0.3.1 item 1.\\n- FEATURE_PARITY: row 1.","status":"open","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z","created_by":"test","updated_at":"2026-01-01T00:00:00Z","source_repo":".","compaction_level":0,"original_size":0}\n' \
+  > "$t5a_dir/issues.jsonl"
+
+run_test "selfdoc-lint: bare N/A strict fail" 1 \
+  env SELFDOC_ISSUES_FILE="$t5a_dir/issues.jsonl" SELFDOC_LINT_PHASE=strict \
+  bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
+
+# ---------------------------------------------------------------------------
+# T6: selfdoc-lint — unstructured traceability → error
+# ---------------------------------------------------------------------------
+t6a_dir="$tmpdir/t6a"
+mkdir -p "$t6a_dir"
+printf '{"id":"trace-001","title":"Weak","description":"## Acceptance Criteria\\nok\\n## Unit Tests\\nok\\n## E2E\\nN/A + justification: pure-function.\\n## Structured Logging\\nN/A + justification: pure-function.\\n## Evidence\\nok\\n## Traceability\\nSee PLAN and FEATURE_PARITY somewhere.","status":"open","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z","created_by":"test","updated_at":"2026-01-01T00:00:00Z","source_repo":".","compaction_level":0,"original_size":0}\n' \
+  > "$t6a_dir/issues.jsonl"
+
+run_test "selfdoc-lint: unstructured traceability" 1 \
+  env SELFDOC_ISSUES_FILE="$t6a_dir/issues.jsonl" bash "$REPO_DIR/scripts/check_bead_self_documentation.sh"
+
+# ---------------------------------------------------------------------------
+# T7: doc-contract-drift — remove ExtInfo from PROPOSAL → fail
+# ---------------------------------------------------------------------------
+t7b_dir="$tmpdir/t7b"
+mkdir -p "$t7b_dir"
 for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md; do
-  cp "$REPO_DIR/$f" "$t4_dir/"
+  cp "$REPO_DIR/$f" "$t7b_dir/"
 done
-sed -i 's/ExtInfo/REDACTED/g' "$t4_dir/FRANKENSSH_PROPOSAL.md"
+sed -i 's/ExtInfo/REDACTED/g' "$t7b_dir/FRANKENSSH_PROPOSAL.md"
 
 run_test "doc-contract-drift: broken ExtInfo" 1 \
-  bash -c "cd '$t4_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+  bash -c "cd '$t7b_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
 
 # ---------------------------------------------------------------------------
-# T5: doc-contract-drift — clean main → pass
+# T8: doc-contract-drift — clean main → pass
 # ---------------------------------------------------------------------------
-t5_dir="$tmpdir/t5"
-mkdir -p "$t5_dir"
+t8_dir="$tmpdir/t8"
+mkdir -p "$t8_dir"
 for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md; do
-  cp "$REPO_DIR/$f" "$t5_dir/"
+  cp "$REPO_DIR/$f" "$t8_dir/"
 done
 
 run_test "doc-contract-drift: clean main" 0 \
-  bash -c "cd '$t5_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+  bash -c "cd '$t8_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
 
 # ---------------------------------------------------------------------------
-# T6: anchor-check — shift line in SPEC → mismatched anchors → fail
+# T9: anchor-check — shift line in SPEC → mismatched anchors → fail
 # ---------------------------------------------------------------------------
-t6_dir="$tmpdir/t6"
-mkdir -p "$t6_dir/scripts"
+t9_dir="$tmpdir/t9"
+mkdir -p "$t9_dir/scripts"
 for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md FRANKENSSH_PROPOSAL.md PROPOSED_ARCHITECTURE.md FEATURE_PARITY.md PHASE2_REVIEW_CHECKLIST_FOR_CLAUDE.md; do
-  cp "$REPO_DIR/$f" "$t6_dir/"
+  cp "$REPO_DIR/$f" "$t9_dir/"
 done
-cp "$REPO_DIR/scripts/anchor_expectations.tsv" "$t6_dir/scripts/"
-sed -i '232 a\\' "$t6_dir/COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md"
+cp "$REPO_DIR/scripts/anchor_expectations.tsv" "$t9_dir/scripts/"
+sed -i '232 a\\' "$t9_dir/COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md"
 
 run_test "anchor-check: shifted line" 1 \
-  bash -c "cd '$t6_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+  bash -c "cd '$t9_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
 
 # ---------------------------------------------------------------------------
-# T7: anchor-check — clean main → pass
+# T10: anchor-check — clean main → pass
 # ---------------------------------------------------------------------------
-t7_dir="$tmpdir/t7"
-mkdir -p "$t7_dir/scripts"
+t10_dir="$tmpdir/t10"
+mkdir -p "$t10_dir/scripts"
 for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md FRANKENSSH_PROPOSAL.md PROPOSED_ARCHITECTURE.md FEATURE_PARITY.md PHASE2_REVIEW_CHECKLIST_FOR_CLAUDE.md; do
-  cp "$REPO_DIR/$f" "$t7_dir/"
+  cp "$REPO_DIR/$f" "$t10_dir/"
 done
-cp "$REPO_DIR/scripts/anchor_expectations.tsv" "$t7_dir/scripts/"
+cp "$REPO_DIR/scripts/anchor_expectations.tsv" "$t10_dir/scripts/"
 
 run_test "anchor-check: clean main" 0 \
-  bash -c "cd '$t7_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+  bash -c "cd '$t10_dir' && bash '$REPO_DIR/scripts/check_review_anchors.sh'"
 
 # ---------------------------------------------------------------------------
 # Summary
