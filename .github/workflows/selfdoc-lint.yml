@@ -1,0 +1,61 @@
+name: selfdoc-lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.beads/**'
+      - 'scripts/check_bead_self_documentation.sh'
+      - '.github/workflows/selfdoc-lint.yml'
+      - 'AGENTS.md'
+      - 'PLAN_TO_PORT_SSH_TO_RUST.md'
+      - 'FEATURE_PARITY.md'
+  push:
+    branches: [main]
+    paths:
+      - '.beads/**'
+      - 'scripts/check_bead_self_documentation.sh'
+      - '.github/workflows/selfdoc-lint.yml'
+      - 'AGENTS.md'
+      - 'PLAN_TO_PORT_SSH_TO_RUST.md'
+      - 'FEATURE_PARITY.md'
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Lint phase'
+        required: false
+        default: 'default'
+        type: choice
+        options:
+          - audit
+          - default
+          - strict
+
+permissions:
+  contents: read
+
+concurrency:
+  group: selfdoc-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selfdoc-lint:
+    name: Bead Self-Documentation Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run selfdoc lint
+        env:
+          SELFDOC_LINT_PHASE: ${{ inputs.phase || 'default' }}
+        run: bash scripts/check_bead_self_documentation.sh
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selfdoc-lint-report
+          path: selfdoc-lint-report.json
+          retention-days: 30
