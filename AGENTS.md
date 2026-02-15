@@ -287,6 +287,28 @@ Rules:
 
 ---
 
+## Model Assignment for Beads
+
+When assigning beads to agents via `ntm`, match the model to the task type.
+Evidence-based routing table (benchmarks and rationale: `AGENTIC_ENV_SETUP.md` §12):
+
+| Task type | Model | Rationale |
+|---|---|---|
+| Review, spec compliance, evidence artifacts | Claude Opus | Highest instruction-following, largest non-degrading context |
+| Trust-boundary implementation (fsh-wire, fsh-crypto) | Claude Opus | Highest SWE-bench, precision-critical |
+| Non-critical implementation | Claude Sonnet | Comparable quality, 10x faster, 40% cheaper |
+| Batch authoring, docs, governance | Codex GPT-5.3 | Terminal-Bench leader, batch-efficient |
+| Prototyping, exploration | Gemini 3 Pro | Fast iteration; do not use for normative output |
+| Fuzz/proptest generation | Sonnet or Codex | Mechanical task, deep reasoning not needed |
+
+Rules:
+1. Every bead assignment SHOULD reference a row from this table.
+2. Trust-boundary crates (`fsh-wire`, `fsh-crypto`, `fsh-transport`) require Opus or explicit human override.
+3. Gemini output on normative artifacts (spec, error taxonomy, wire structs) requires Claude review before merge.
+4. Update `AGENTIC_ENV_SETUP.md` §12 when model versions or benchmarks change.
+
+---
+
 ## Porting Doctrine (Spec-First, Conformance-First)
 
 Follow this sequence:
