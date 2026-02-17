@@ -57,6 +57,45 @@ check_contract() {
     >> "$checks_file"
 }
 
+# check_no_contract RULE_ID PATTERN FILE [FILE...]
+# Inverse of check_contract: FAILS if PATTERN appears in ANY listed file.
+#
+# Missing-file semantics: intentionally differs from check_contract.
+# check_contract: missing file → fail (required pattern MUST appear).
+# check_no_contract: missing file → pass (forbidden pattern can't appear).
+check_no_contract() {
+  local rule="$1" pattern="$2"
+  shift 2
+  local files=("$@")
+  local found_in=()
+
+  for f in "${files[@]}"; do
+    if [[ ! -f "$f" ]]; then
+      continue
+    elif tr '\n' ' ' < "$f" | grep -qiE "$pattern"; then
+      found_in+=("$f")
+    fi
+  done
+
+  local status="pass" detail=""
+  if [[ ${#found_in[@]} -gt 0 ]]; then
+    status="fail"
+    detail="Forbidden pattern found in: $(IFS=', '; echo "${found_in[*]}")"
+    ((ERRORS++)) || true
+  fi
+
+  local files_json
+  files_json=$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)
+
+  jq -n \
+    --arg rule "$rule" \
+    --arg status "$status" \
+    --argjson files "$files_json" \
+    --arg detail "$detail" \
+    '{rule:$rule, status:$status, files:$files, detail:$detail}' \
+    >> "$checks_file"
+}
+
 # --- document aliases ------------------------------------------------------
 
 SPEC="COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md"
@@ -100,6 +139,31 @@ check_contract "extinfo-baseline" \
 check_contract "wire-fail-closed" \
   "fail.closed.*ParseError|ParseError.*fail.closed|fail closed.*deterministic" \
   "$SPEC" "$PLAN"
+
+# --- AGENTIC contracts (C8-C10) -------------------------------------------
+
+AGENTIC="AGENTIC_ENV_SETUP.md"
+AGENTS="AGENTS.md"
+
+# C8: AGENTIC references AGENTS.md Agent Mail Identity section
+check_contract "agentic-agents-ref" \
+  "AGENTS\\.md.*Agent Mail Identity|Agent Mail Identity.*AGENTS\\.md" \
+  "$AGENTIC"
+
+# C9: AGENTIC documents auto_register = false
+check_contract "agentic-auto-register-false" \
+  "auto_register\s*=\s*false" \
+  "$AGENTIC"
+
+# C9b: auto_register = true must NOT appear
+check_no_contract "agentic-no-auto-register-true" \
+  "auto_register\s*=\s*true" \
+  "$AGENTIC"
+
+# C10: AGENTIC references preflight script
+check_contract "agentic-preflight-ref" \
+  "preflight\\.sh" \
+  "$AGENTIC"
 
 # --- report ----------------------------------------------------------------
 
