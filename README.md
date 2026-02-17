@@ -172,3 +172,7 @@ cargo test --workspace
 cargo test -p fsh-harness -- --nocapture
 cargo bench -p fsh-harness
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
