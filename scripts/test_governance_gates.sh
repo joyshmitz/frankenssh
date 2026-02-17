@@ -144,7 +144,9 @@ run_test "selfdoc-lint: unstructured traceability" 1 \
 # ---------------------------------------------------------------------------
 t7b_dir="$tmpdir/t7b"
 mkdir -p "$t7b_dir"
-for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md; do
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
   cp "$REPO_DIR/$f" "$t7b_dir/"
 done
 sed -i 's/ExtInfo/REDACTED/g' "$t7b_dir/FRANKENSSH_PROPOSAL.md"
@@ -157,7 +159,9 @@ run_test "doc-contract-drift: broken ExtInfo" 1 \
 # ---------------------------------------------------------------------------
 t8_dir="$tmpdir/t8"
 mkdir -p "$t8_dir"
-for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md; do
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
   cp "$REPO_DIR/$f" "$t8_dir/"
 done
 
@@ -204,6 +208,66 @@ fi
 # ---------------------------------------------------------------------------
 run_test "anchor-check: missing expectations hard fail" 1 \
   bash -c "cd '$t10_dir' && ANCHOR_EXPECTATIONS=/tmp/nonexistent.tsv bash '$REPO_DIR/scripts/check_review_anchors.sh'"
+
+# ---------------------------------------------------------------------------
+# T12: doc-contract-drift — remove preflight.sh from AGENTIC → C10 fail
+# ---------------------------------------------------------------------------
+t12_dir="$tmpdir/t12"
+mkdir -p "$t12_dir"
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
+  cp "$REPO_DIR/$f" "$t12_dir/"
+done
+sed -i 's/preflight\.sh/REDACTED/g' "$t12_dir/AGENTIC_ENV_SETUP.md"
+
+run_test "doc-contract-drift: broken C10 preflight ref" 1 \
+  bash -c "cd '$t12_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+
+# ---------------------------------------------------------------------------
+# T13: doc-contract-drift — inject auto_register=true → C9b fail
+# ---------------------------------------------------------------------------
+t13_dir="$tmpdir/t13"
+mkdir -p "$t13_dir"
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
+  cp "$REPO_DIR/$f" "$t13_dir/"
+done
+printf '\nauto_register = true\n' >> "$t13_dir/AGENTIC_ENV_SETUP.md"
+
+run_test "doc-contract-drift: C9b auto_register=true detected" 1 \
+  bash -c "cd '$t13_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+
+# ---------------------------------------------------------------------------
+# T14: doc-contract-drift — remove Agent Mail Identity ref → C8 fail
+# ---------------------------------------------------------------------------
+t14_dir="$tmpdir/t14"
+mkdir -p "$t14_dir"
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
+  cp "$REPO_DIR/$f" "$t14_dir/"
+done
+sed -i 's/Agent Mail Identity/REDACTED/g' "$t14_dir/AGENTIC_ENV_SETUP.md"
+
+run_test "doc-contract-drift: broken C8 agents ref" 1 \
+  bash -c "cd '$t14_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
+
+# ---------------------------------------------------------------------------
+# T15: doc-contract-drift — remove auto_register=false → C9 fail
+# ---------------------------------------------------------------------------
+t15_dir="$tmpdir/t15"
+mkdir -p "$t15_dir"
+for f in COMPREHENSIVE_SPEC_FOR_FRANKENSSH_V1.md PLAN_TO_PORT_SSH_TO_RUST.md \
+         PROPOSED_ARCHITECTURE.md FRANKENSSH_PROPOSAL.md \
+         AGENTIC_ENV_SETUP.md AGENTS.md; do
+  cp "$REPO_DIR/$f" "$t15_dir/"
+done
+sed -i 's/auto_register *= *false/auto_register_disabled/g' "$t15_dir/AGENTIC_ENV_SETUP.md"
+
+run_test "doc-contract-drift: broken C9 auto_register=false" 1 \
+  bash -c "cd '$t15_dir' && bash '$REPO_DIR/scripts/check_doc_contract_drift.sh'"
 
 # ---------------------------------------------------------------------------
 # Summary

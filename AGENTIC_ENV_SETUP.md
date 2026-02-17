@@ -20,8 +20,8 @@
 Робоча схема:
 
 1. `ntm` створює tmux-сесію агентів у `/data/projects/frankenssh`.
-2. Під час spawn `ntm` авто-реєструє кожен pane як окремого Agent Mail агента (випадкове валідне імʼя виду `AdjectiveNoun`).
-3. Після spawn hook повідомляє кожному pane його **фактичне** Agent Mail імʼя.
+2. Під час spawn кожен pane-агент реєструється з фіксованим іменем з `AGENTS.md` § Agent Mail Identity.
+3. Після spawn hook повідомляє кожному pane його **assigned** Agent Mail імʼя.
 4. Агенти працюють із MCP Agent Mail через endpoint `http://127.0.0.1:8765/api/`.
 5. Mail UI доступний за `http://127.0.0.1:8765/mail/` (проєкт `data-projects-frankenssh`).
 6. `cass` дає історичний пошук; `cm` дає контекст поверх індексу `cass`.
@@ -39,7 +39,7 @@
 - `[agent_mail]`
   - `enabled = true`
   - `url = "http://127.0.0.1:8765/api/"`
-  - `auto_register = true`
+  - `auto_register = false`
   - `program_name = "ntm"`
 - `[agents].codex` перевизначено без застарілого флага `--enable web_search=live` (він ламав старт Codex pane у поточній версії CLI).
 - `[gemini_setup]`
@@ -168,9 +168,10 @@ ntm spawn frankenssh --cc=1 --cod=1 --gmi=1
 
 Після spawn очікувана поведінка:
 
-1. `ntm` реєструє pane-агентів у Agent Mail автоматично.
-2. Hook надсилає в кожен pane його `agent_name`.
-3. Кожен агент викликає MCP `fetch_inbox` уже зі своїм реальним іменем.
+1. Кожен pane-агент реєструється з фіксованим іменем з `AGENTS.md` § Agent Mail Identity.
+2. Hook надсилає в кожен pane його assigned `agent_name`.
+3. Кожен агент викликає MCP `fetch_inbox` зі своїм assigned іменем.
+4. Перевірити готовність: `bash scripts/preflight.sh --post`.
 
 ---
 
@@ -198,17 +199,13 @@ curl -s http://127.0.0.1:8765/mail/api/projects/data-projects-frankenssh/agents
 - `ntm status frankenssh`: або здорова активна сесія, або `session not found` якщо сесія ще не піднята
 - Mail API `/mail/api/projects/data-projects-frankenssh/agents`: повертає актуальний список агентів
 
-### 6.1 Поточний стан агентів у Mail
+### 6.1 Модель агентів у Mail
 
-Станом на 2026-02-14 у `data-projects-frankenssh` — **0 агентів** (повний prune).
-
-Усі агенти (coordinator `NavyHollow`, pane-агенти claude-code/codex-cli/gemini-cli) реєструються автоматично при `ntm spawn` з випадковими іменами і живуть тільки поки сесія активна. Після `ntm kill` + `prune-agents` всі видаляються.
-
-Будь-які накопичені тимчасові/дубльовані агенти прибираються через `projects prune-agents`.
+Агенти реєструються з фіксованими іменами з `AGENTS.md` § Agent Mail Identity. Між сесіями список агентів порожній (це нормально). Після spawn — перевірити через `bash scripts/preflight.sh --post`.
 
 ### 6.2 Безпечне очищення зайвих агентів (без костилів)
 
-Використовувати тільки офіційну CLI-команду `projects prune-agents` у `mcp_agent_mail`; не чіпати SQLite вручну.
+`prune-agents` видаляє тільки дублікати/застарілі, не фіксовані агенти. Використовувати тільки офіційну CLI-команду `projects prune-agents` у `mcp_agent_mail`; не чіпати SQLite вручну.
 
 Dry-run:
 
@@ -243,8 +240,8 @@ cd /home/ubuntu/mcp_agent_mail
 4. Перший spawn нового session-name  
    Може дати recovery warning по inbox до первинної реєстрації session coordinator. Після першої реєстрації зазвичай зникає.
 
-5. Імена агентів  
-   `ntm` генерує їх автоматично. Не треба примусово перереєстровувати з “ручними” іменами без окремої причини.
+5. Імена агентів
+   Імена фіксовані в `AGENTS.md` § Agent Mail Identity. Кожен агент реєструється при старті зі своїм assigned name.
 
 6. Старі плани можуть містити застарілі кроки  
    У файлі `/home/ubuntu/.claude/plans/hazy-puzzling-feather.md` є щонайменше 3 неактуальні пункти:
@@ -286,16 +283,16 @@ cd /home/ubuntu/mcp_agent_mail
 
 ---
 
-## 9. Що вважати “готовим до розробки”
+## 9. Що вважати "готовим до розробки"
 
-Середовище вважається підготовленим, якщо одночасно виконано:
+Середовище вважається підготовленим, якщо `bash scripts/preflight.sh --post` завершується з exit 0.
 
-1. `acfs doctor` без fail.
-2. `ntm doctor` = HEALTHY.
-3. MCP Agent Mail + Meta Skill підключені для Claude/Codex.
-4. `cass status` healthy та `cm context` повертає контекст.
-5. `ntm spawn frankenssh ...` піднімає pane-агентів без фатальних помилок старту.
-6. У Mail проєкту лишаються тільки потрібні активні агенти, зайві видаляються через `projects prune-agents`.
+Скрипт перевіряє:
+1. Інфраструктуру: acfs, ntm, Agent Mail, cass, cm, meta-skill.
+2. Сесію: ntm panes, MCP підключення (Claude + Codex), агенти з `AGENTS.md` § Agent Mail Identity.
+3. Governance: doc-contract-drift, anchor-check, governance tests.
+
+Для повної build-валідації: `bash scripts/preflight.sh --post --cargo`.
 
 ---
 
