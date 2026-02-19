@@ -145,6 +145,73 @@ validate_check_ids() {
   done
 }
 
+check_category_for_id() {
+  local id="$1" entry
+  for entry in "${CHECK_REGISTRY[@]}"; do
+    if [[ "${entry#*:}" == "$id" ]]; then
+      printf '%s\n' "${entry%%:*}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+category_enabled_for_mode() {
+  local category="$1"
+  case "$MODE" in
+    all)
+      return 0
+      ;;
+    pre)
+      [[ "$category" == "pre" ]]
+      ;;
+    post)
+      if [[ "$category" == "pre" || "$category" == "post" ]]; then
+        return 0
+      fi
+      if [[ "$category" == "cargo" && "$CARGO" == "true" ]]; then
+        return 0
+      fi
+      return 1
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+validate_check_ids_for_mode() {
+  local invalid=() id category
+  IFS=',' read -ra ids <<< "$CHECK_FILTER"
+  for id in "${ids[@]}"; do
+    category=$(check_category_for_id "$id") || continue
+    if ! category_enabled_for_mode "$category"; then
+      invalid+=("$id($category)")
+    fi
+  done
+
+  if [[ ${#invalid[@]} -gt 0 ]]; then
+    printf 'ERROR: --check contains IDs incompatible with mode "%s": %s\n' \
+      "$MODE" "$(IFS=', '; echo "${invalid[*]}")" >&2
+    case "$MODE" in
+      pre)
+        printf 'Allowed categories for this run: pre\n' >&2
+        ;;
+      post)
+        if [[ "$CARGO" == "true" ]]; then
+          printf 'Allowed categories for this run: pre, post, cargo\n' >&2
+        else
+          printf 'Allowed categories for this run: pre, post\n' >&2
+        fi
+        ;;
+      all)
+        printf 'Allowed categories for this run: pre, post, cargo\n' >&2
+        ;;
+    esac
+    exit 2
+  fi
+}
+
 list_checks() {
   for entry in "${CHECK_REGISTRY[@]}"; do
     printf '%-6s %s\n' "${entry%%:*}" "${entry#*:}"
@@ -240,8 +307,8 @@ parse_args() {
     shift
   done
 
-  # --cargo requires --post
-  if [[ "$CARGO" == "true" && "$MODE" != "post" && -z "$CHECK_FILTER" ]]; then
+  # --cargo requires explicit --post
+  if [[ "$CARGO" == "true" && "$MODE" != "post" ]]; then
     printf 'ERROR: --cargo requires --post\n' >&2
     exit 2
   fi
@@ -252,6 +319,7 @@ parse_args() {
     if [[ -z "$MODE" ]]; then
       MODE="all"
     fi
+    validate_check_ids_for_mode
   fi
 
   if [[ -z "$CHECK_FILTER" && -z "$MODE" ]]; then
