@@ -845,6 +845,9 @@ print_summary() {
   printf '\n=== preflight summary ===\n'
   printf 'Total: %d  Pass: %d  Fix: %d  Warn: %d  Fail: %d  Skip: %d  (%d%%)\n' \
     "$TOTAL" "$PASS" "$FIX" "$WARN" "$FAIL" "$SKIP" "$pass_pct"
+  if [[ $FAIL -eq 0 && $WARN -gt 0 ]]; then
+    printf 'Policy: warnings are non-blocking (exit 0). Review report details.\n'
+  fi
   printf 'Report: %s\n' "$REPORT_FILE"
 }
 

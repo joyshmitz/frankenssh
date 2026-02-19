@@ -57,6 +57,60 @@ check_contract() {
     >> "$checks_file"
 }
 
+# Extract text between section heading that matches START_RE and next "## " heading.
+extract_section() {
+  local file="$1" start_re="$2"
+  awk -v re="$start_re" '
+    $0 ~ re { found=1; next }
+    found && /^## / { exit }
+    found { print }
+  ' "$file"
+}
+
+# check_contract_in_section RULE_ID START_RE PATTERN FILE [FILE...]
+# Verifies PATTERN appears in a specific markdown section only.
+check_contract_in_section() {
+  local rule="$1" start_re="$2" pattern="$3"
+  shift 3
+  local files=("$@")
+  local missing=()
+
+  for f in "${files[@]}"; do
+    if [[ ! -f "$f" ]]; then
+      missing+=("$f (not found)")
+      continue
+    fi
+    if ! grep -qE "$start_re" "$f"; then
+      missing+=("$f (section not found)")
+      continue
+    fi
+
+    local section_text
+    section_text=$(extract_section "$f" "$start_re")
+    if ! printf '%s\n' "$section_text" | tr '\n' ' ' | grep -qiE "$pattern"; then
+      missing+=("$f")
+    fi
+  done
+
+  local status="pass" detail=""
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    status="fail"
+    detail="Pattern not found in section for: $(IFS=', '; echo "${missing[*]}")"
+    ((ERRORS++)) || true
+  fi
+
+  local files_json
+  files_json=$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)
+
+  jq -n \
+    --arg rule "$rule" \
+    --arg status "$status" \
+    --argjson files "$files_json" \
+    --arg detail "$detail" \
+    '{rule:$rule, status:$status, files:$files, detail:$detail}' \
+    >> "$checks_file"
+}
+
 # check_no_contract RULE_ID PATTERN FILE [FILE...]
 # Inverse of check_contract: FAILS if PATTERN appears in ANY listed file.
 #
@@ -146,7 +200,9 @@ AGENTIC="AGENTIC_ENV_SETUP.md"
 AGENTS="AGENTS.md"
 
 # C8: AGENTIC references AGENTS.md Agent Mail Identity section
-check_contract "agentic-agents-ref" \
+# Section-anchored to "## 6.1 ..." to avoid whole-file false passes.
+check_contract_in_section "agentic-agents-ref" \
+  "^### 6[.]1 " \
   "AGENTS\\.md.*Agent Mail Identity|Agent Mail Identity.*AGENTS\\.md" \
   "$AGENTIC"
 
@@ -161,7 +217,9 @@ check_no_contract "agentic-no-auto-register-true" \
   "$AGENTIC"
 
 # C10: AGENTIC references preflight script
-check_contract "agentic-preflight-ref" \
+# Section-anchored to readiness gate section "## 9 ...".
+check_contract_in_section "agentic-preflight-ref" \
+  "^## 9[.] " \
   "preflight\\.sh" \
   "$AGENTIC"
 

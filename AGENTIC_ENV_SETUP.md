@@ -294,6 +294,10 @@ cd /home/ubuntu/mcp_agent_mail
 
 Для повної build-валідації: `bash scripts/preflight.sh --post --cargo`.
 
+Політика `warn` у readiness:
+- Якщо `fail = 0`, але є `warn`, readiness вважається прохідним (`exit 0`).
+- Це режим "pass with warnings": перевірити деталі в `preflight-report.json` і виправити причину warn окремо.
+
 ---
 
 ## 10. Політика актуальності документації
